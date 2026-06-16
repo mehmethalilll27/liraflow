@@ -1,0 +1,109 @@
+<!doctype html>
+<html lang="tr">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>LiraFlow | Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="/static/style.css" />
+  </head>
+  <body class="bg-slate-50 text-slate-800">
+    <header class="sticky top-0 z-20 border-b border-slate-200 bg-white/90 backdrop-blur">
+      <div class="mx-auto flex max-w-7xl items-center justify-between px-4 py-3 md:px-6">
+        <div>
+          <h1 class="text-2xl font-extrabold text-blue-700">LiraFlow</h1>
+          <p class="text-sm text-slate-500">Cashflow Dashboard</p>
+        </div>
+        <span id="durum-mesaji" class="rounded-lg bg-blue-50 px-3 py-1 text-sm text-blue-700"></span>
+      </div>
+    </header>
+
+    <main class="mx-auto max-w-7xl space-y-6 px-4 py-6 md:px-6">
+      <section>
+        <h2 class="mb-3 text-lg font-semibold">Genel Ozet</h2>
+        <div class="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
+          <div class="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+            <p class="text-xs font-semibold uppercase tracking-wide text-slate-500">Toplam Fatura</p>
+            <p id="ozet-fatura-adedi" class="mt-2 text-2xl font-bold">-</p>
+          </div>
+          <div class="rounded-xl border border-amber-200 bg-amber-50 p-4 shadow-sm">
+            <p class="text-xs font-semibold uppercase tracking-wide text-amber-700">Toplam Odenecek</p>
+            <p id="ozet-odenecek" class="mt-2 text-2xl font-bold text-amber-800">-</p>
+          </div>
+          <div class="rounded-xl border border-red-200 bg-red-50 p-4 shadow-sm">
+            <p class="text-xs font-semibold uppercase tracking-wide text-red-700">Toplam Geciken</p>
+            <p id="ozet-geciken" class="mt-2 text-2xl font-bold text-red-800">-</p>
+          </div>
+          <div class="rounded-xl border border-emerald-200 bg-emerald-50 p-4 shadow-sm">
+            <p class="text-xs font-semibold uppercase tracking-wide text-emerald-700">Toplam Odenen</p>
+            <p id="ozet-odenen" class="mt-2 text-2xl font-bold text-emerald-800">-</p>
+          </div>
+        </div>
+      </section>
+
+      <section class="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+        <h2 class="mb-4 text-lg font-semibold">Filtreler</h2>
+        <div class="grid grid-cols-1 gap-3 md:grid-cols-5">
+          <div>
+            <label for="durum-filtre" class="mb-1 block text-sm font-medium text-slate-600">Durum</label>
+            <select id="durum-filtre" class="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm">
+              <option value="">Tumu</option>
+              <option value="BEKLIYOR">Bekliyor</option>
+              <option value="GECIKTI">Gecikti</option>
+              <option value="ODENDI">Odendi</option>
+              <option value="IPTAL">Iptal</option>
+            </select>
+          </div>
+          <div class="md:col-span-2">
+            <label for="firma-ara" class="mb-1 block text-sm font-medium text-slate-600">Firma Adi</label>
+            <input id="firma-ara" type="text" placeholder="Firma adi yaz..." class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm" />
+          </div>
+          <div class="flex items-end gap-2 md:col-span-2">
+            <button id="filtrele-btn" class="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700">Filtrele</button>
+            <button id="temizle-btn" class="rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100">Temizle</button>
+          </div>
+        </div>
+      </section>
+
+      <section class="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+        <h2 class="mb-4 text-lg font-semibold">Faturalar</h2>
+        <div class="overflow-x-auto">
+          <table class="min-w-full text-sm">
+            <thead>
+              <tr class="border-b border-slate-200 text-left text-slate-500">
+                <th class="px-3 py-2">Fatura No</th>
+                <th class="px-3 py-2">Firma</th>
+                <th class="px-3 py-2">Durum</th>
+                <th class="px-3 py-2">Tutar</th>
+                <th class="px-3 py-2">Vade</th>
+                <th class="px-3 py-2">Islem</th>
+              </tr>
+            </thead>
+            <tbody id="fatura-tablo-body"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+        <h2 class="mb-4 text-lg font-semibold">Yeni Firma Ekle</h2>
+        <form id="firma-form" class="grid grid-cols-1 gap-3 md:grid-cols-2 lg:grid-cols-3">
+          <input id="firma_adi" placeholder="Firma adi" class="rounded-lg border border-slate-300 px-3 py-2 text-sm" required />
+          <input id="eposta" placeholder="E-posta" class="rounded-lg border border-slate-300 px-3 py-2 text-sm" />
+          <input id="telefon" placeholder="Telefon" class="rounded-lg border border-slate-300 px-3 py-2 text-sm" />
+          <input id="yetkili_kisi" placeholder="Yetkili kisi" class="rounded-lg border border-slate-300 px-3 py-2 text-sm" />
+          <input id="vergi_no" placeholder="Vergi no" class="rounded-lg border border-slate-300 px-3 py-2 text-sm" />
+          <input id="adres" placeholder="Adres" class="rounded-lg border border-slate-300 px-3 py-2 text-sm" />
+          <button type="submit" class="rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-700">Kaydet</button>
+        </form>
+      </section>
+    </main>
+
+    <script src="/static/js/api.js"></script>
+    <script src="/static/js/dashboard.js"></script>
+    <script src="/static/js/faturalar.js"></script>
+    <script src="/static/js/firmalar.js"></script>
+  </body>
+</html>

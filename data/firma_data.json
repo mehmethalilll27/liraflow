@@ -1,0 +1,289 @@
+{
+  "firmalar": [
+    {
+      "firma_id": 1,
+      "firma_adi": "Marmara Teknoloji",
+      "eposta": "info@marmarateknoloji.com",
+      "telefon": "5321000001",
+      "yetkili_kisi": "",
+      "vergi_no": "",
+      "adres": "",
+      "aktif_mi": true,
+      "toplam_borc": 18500.0,
+      "toplam_odenen": 0,
+      "toplam_geciken": 0,
+      "fatura_no_listesi": [
+        "FTR-2026-0001"
+      ],
+      "odeme_periyodu_gun": 15
+    },
+    {
+      "firma_id": 2,
+      "firma_adi": "Anadolu Lojistik",
+      "eposta": "iletisim@anadolulojistik.com",
+      "telefon": "5321000002",
+      "yetkili_kisi": "",
+      "vergi_no": "",
+      "adres": "",
+      "aktif_mi": true,
+      "toplam_borc": 9200.0,
+      "toplam_odenen": 0,
+      "toplam_geciken": 9200.0,
+      "fatura_no_listesi": [
+        "FTR-2026-0002"
+      ],
+      "odeme_periyodu_gun": 15
+    },
+    {
+      "firma_id": 3,
+      "firma_adi": "Ege Dis Ticaret",
+      "eposta": "destek@egedisticaret.com",
+      "telefon": "5321000003",
+      "yetkili_kisi": "",
+      "vergi_no": "",
+      "adres": "",
+      "aktif_mi": true,
+      "toplam_borc": 12750.0,
+      "toplam_odenen": 0,
+      "toplam_geciken": 0,
+      "fatura_no_listesi": [
+        "FTR-2026-0003"
+      ],
+      "odeme_periyodu_gun": 30
+    },
+    {
+      "firma_id": 4,
+      "firma_adi": "Karadeniz Gida",
+      "eposta": "muhasebe@karadenizgida.com",
+      "telefon": "5321000004",
+      "yetkili_kisi": "",
+      "vergi_no": "",
+      "adres": "",
+      "aktif_mi": true,
+      "toplam_borc": 0,
+      "toplam_odenen": 6400.0,
+      "toplam_geciken": 0,
+      "fatura_no_listesi": [
+        "FTR-2026-0004"
+      ],
+      "odeme_periyodu_gun": 45
+    },
+    {
+      "firma_id": 5,
+      "firma_adi": "Akdeniz Insaat",
+      "eposta": "ofis@akdenizinsaat.com",
+      "telefon": "5321000005",
+      "yetkili_kisi": "",
+      "vergi_no": "",
+      "adres": "",
+      "aktif_mi": true,
+      "toplam_borc": 22300.0,
+      "toplam_odenen": 0,
+      "toplam_geciken": 0,
+      "fatura_no_listesi": [
+        "FTR-2026-0005"
+      ],
+      "odeme_periyodu_gun": 45
+    },
+    {
+      "firma_id": 6,
+      "firma_adi": "Istanbul Yazilim",
+      "eposta": "hello@istanbulyazilim.com",
+      "telefon": "5321000006",
+      "yetkili_kisi": "",
+      "vergi_no": "",
+      "adres": "",
+      "aktif_mi": true,
+      "toplam_borc": 15800.0,
+      "toplam_odenen": 0,
+      "toplam_geciken": 15800.0,
+      "fatura_no_listesi": [
+        "FTR-2026-0006"
+      ],
+      "odeme_periyodu_gun": 15
+    },
+    {
+      "firma_id": 7,
+      "firma_adi": "Bursa Otomotiv",
+      "eposta": "satis@bursaotomotiv.com",
+      "telefon": "5321000007",
+      "yetkili_kisi": "",
+      "vergi_no": "",
+      "adres": "",
+      "aktif_mi": true,
+      "toplam_borc": 30500.0,
+      "toplam_odenen": 0,
+      "toplam_geciken": 0,
+      "fatura_no_listesi": [
+        "FTR-2026-0007"
+      ],
+      "odeme_periyodu_gun": 30
+    },
+    {
+      "firma_id": 8,
+      "firma_adi": "Konya Tarim",
+      "eposta": "bilgi@konyatarim.com",
+      "telefon": "5321000008",
+      "yetkili_kisi": "",
+      "vergi_no": "",
+      "adres": "",
+      "aktif_mi": true,
+      "toplam_borc": 8700.0,
+      "toplam_odenen": 0,
+      "toplam_geciken": 0,
+      "fatura_no_listesi": [
+        "FTR-2026-0008"
+      ],
+      "odeme_periyodu_gun": 15
+    },
+    {
+      "firma_id": 9,
+      "firma_adi": "Gaziantep Tekstil",
+      "eposta": "info@gazianteptekstil.com",
+      "telefon": "5321000009",
+      "yetkili_kisi": "",
+      "vergi_no": "",
+      "adres": "",
+      "aktif_mi": true,
+      "toplam_borc": 0,
+      "toplam_odenen": 14100.0,
+      "toplam_geciken": 0,
+      "fatura_no_listesi": [
+        "FTR-2026-0009"
+      ],
+      "odeme_periyodu_gun": 30
+    },
+    {
+      "firma_id": 10,
+      "firma_adi": "Izmir Kimya",
+      "eposta": "destek@izmirkimya.com",
+      "telefon": "5321000010",
+      "yetkili_kisi": "",
+      "vergi_no": "",
+      "adres": "",
+      "aktif_mi": true,
+      "toplam_borc": 19600.0,
+      "toplam_odenen": 0,
+      "toplam_geciken": 0,
+      "fatura_no_listesi": [
+        "FTR-2026-0010"
+      ],
+      "odeme_periyodu_gun": 45
+    },
+    {
+      "firma_id": 11,
+      "firma_adi": "Sakarya Makina",
+      "eposta": "iletisim@sakaryamakina.com",
+      "telefon": "5321000011",
+      "yetkili_kisi": "",
+      "vergi_no": "",
+      "adres": "",
+      "aktif_mi": true,
+      "toplam_borc": 11200.0,
+      "toplam_odenen": 0,
+      "toplam_geciken": 11200.0,
+      "fatura_no_listesi": [
+        "FTR-2026-0011"
+      ],
+      "odeme_periyodu_gun": 15
+    },
+    {
+      "firma_id": 12,
+      "firma_adi": "Kayseri Mobilya",
+      "eposta": "ofis@kayserimobilya.com",
+      "telefon": "5321000012",
+      "yetkili_kisi": "",
+      "vergi_no": "",
+      "adres": "",
+      "aktif_mi": true,
+      "toplam_borc": 7600.0,
+      "toplam_odenen": 0,
+      "toplam_geciken": 0,
+      "fatura_no_listesi": [
+        "FTR-2026-0012"
+      ],
+      "odeme_periyodu_gun": 30
+    },
+    {
+      "firma_id": 13,
+      "firma_adi": "Eskisehir Enerji",
+      "eposta": "enerji@eskisehirenerji.com",
+      "telefon": "5321000013",
+      "yetkili_kisi": "",
+      "vergi_no": "",
+      "adres": "",
+      "aktif_mi": true,
+      "toplam_borc": 24900.0,
+      "toplam_odenen": 0,
+      "toplam_geciken": 0,
+      "fatura_no_listesi": [
+        "FTR-2026-0013"
+      ],
+      "odeme_periyodu_gun": 30
+    },
+    {
+      "firma_id": 14,
+      "firma_adi": "Adana Plastik",
+      "eposta": "bilgi@adanaplastik.com",
+      "telefon": "5321000014",
+      "yetkili_kisi": "",
+      "vergi_no": "",
+      "adres": "",
+      "aktif_mi": true,
+      "toplam_borc": 0,
+      "toplam_odenen": 0,
+      "toplam_geciken": 0,
+      "fatura_no_listesi": [],
+      "odeme_periyodu_gun": 30
+    },
+    {
+      "firma_id": 15,
+      "firma_adi": "Antalya Turizm",
+      "eposta": "rezervasyon@antalyaturizm.com",
+      "telefon": "5321000015",
+      "yetkili_kisi": "",
+      "vergi_no": "",
+      "adres": "",
+      "aktif_mi": true,
+      "toplam_borc": 17400.0,
+      "toplam_odenen": 0,
+      "toplam_geciken": 0,
+      "fatura_no_listesi": [
+        "FTR-2026-0015"
+      ],
+      "odeme_periyodu_gun": 30
+    },
+    {
+      "firma_id": 16,
+      "firma_adi": "Trabzon Denizcilik",
+      "eposta": "operasyon@trabzondenizcilik.com",
+      "telefon": "5321000016",
+      "yetkili_kisi": "",
+      "vergi_no": "",
+      "adres": "",
+      "aktif_mi": true,
+      "toplam_borc": 28600.0,
+      "toplam_odenen": 0,
+      "toplam_geciken": 0,
+      "fatura_no_listesi": [
+        "FTR-2026-0016"
+      ],
+      "odeme_periyodu_gun": 30
+    },
+    {
+      "firma_id": 17,
+      "firma_adi": "Rotate LAB",
+      "eposta": "info@rotatelab.com",
+      "telefon": "05524287288",
+      "yetkili_kisi": "",
+      "vergi_no": "",
+      "adres": "",
+      "aktif_mi": true,
+      "toplam_borc": 0,
+      "toplam_odenen": 0,
+      "toplam_geciken": 0,
+      "fatura_no_listesi": [],
+      "odeme_periyodu_gun": 30
+    }
+  ]
+}

@@ -1,0 +1,12 @@
+body {
+  font-family: "Inter", Arial, sans-serif;
+}
+
+#durum-mesaji:empty {
+  display: none;
+}
+
+tbody tr {
+  border-bottom: 1px solid #e2e8f0;
+}
+

@@ -1,0 +1,8 @@
+{
+  "kullanici_adi": "Abdurrahman Koçak",
+  "kullanici_unvan": "Yönetici",
+  "varsayilan_odeme_periyodu": 30,
+  "bildirim_gun_siniri": 7,
+  "otomatik_gecikti": true,
+  "varsayilan_vade_gunu": 30
+}

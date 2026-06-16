@@ -1,0 +1,10 @@
+{
+  "kullanicilar": [
+    {
+      "kullanici_adi": "abdurrahman",
+      "ad_soyad": "Abdurrahman Koçak",
+      "unvan": "Yönetici",
+      "sifre_hash": "$2b$12$gjslnCTctjLSc9qKUQgMAuYWGjjMksLvpKBmyVahG.cjTO0dxkON."
+    }
+  ]
+}
