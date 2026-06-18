@@ -19,6 +19,7 @@ class Fatura:
         arsiv_mi: bool = False,
         kategori: str = "genel",
         oncelik: str = "orta",
+        yon: str = "GIDER",
         tahsilat_gecmisi: list[dict] | None = None,
     ):
         self.fatura_id = fatura_id
@@ -36,6 +37,7 @@ class Fatura:
         self.arsiv_mi = arsiv_mi
         self.kategori = kategori
         self.oncelik = oncelik
+        self.yon = yon.upper() if yon else "GIDER"
         self.tahsilat_gecmisi = tahsilat_gecmisi or []
 
     @staticmethod
@@ -69,6 +71,7 @@ class Fatura:
             "arsiv_mi": self.arsiv_mi,
             "kategori": self.kategori,
             "oncelik": self.oncelik,
+            "yon": self.yon,
             "tahsilat_gecmisi": self.tahsilat_gecmisi,
         }
 
@@ -90,5 +93,6 @@ class Fatura:
             arsiv_mi=veri.get("arsiv_mi", False),
             kategori=veri.get("kategori", "genel"),
             oncelik=veri.get("oncelik", "orta"),
+            yon=veri.get("yon", "GIDER"),
             tahsilat_gecmisi=veri.get("tahsilat_gecmisi", []),
         )

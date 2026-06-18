@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Depends, FastAPI, HTTPException, Query
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 from pathlib import Path
@@ -54,6 +54,7 @@ class FaturaCreatePayload(BaseModel):
     kategori: str = "genel"
     oncelik: str = "orta"
     odeme_periyodu_gun: int | None = None
+    yon: str = "GIDER"
 
 
 class OdemeKayitPayload(BaseModel):
@@ -70,10 +71,14 @@ class AyarlarPayload(BaseModel):
     varsayilan_vade_gunu: int | None = None
     bildirim_gun_siniri: int | None = None
     otomatik_gecikti: bool | None = None
+    mevcut_kasa_bakiyesi: float | None = None
 
 
 def _html_sayfa(dosya_adi: str) -> FileResponse:
-    return FileResponse(str(web_dir / "templates" / dosya_adi))
+    return FileResponse(
+        str(web_dir / "templates" / dosya_adi),
+        headers={"Cache-Control": "no-cache, no-store, must-revalidate"},
+    )
 
 
 @app.get("/giris")
@@ -107,8 +112,8 @@ def ayarlar_sayfasi() -> FileResponse:
 
 
 @app.get("/eski-panel")
-def eski_panel() -> FileResponse:
-    return _html_sayfa("index.html")
+def eski_panel() -> RedirectResponse:
+    return RedirectResponse(url="/faturalar", status_code=302)
 
 
 @public_api.get("/health")
@@ -134,6 +139,11 @@ def bildirimleri_getir() -> dict:
 @api.get("/ozet")
 def genel_ozet() -> dict:
     return service.get_genel_ozet()
+
+
+@api.get("/dashboard")
+def nakit_dashboard(gun: int = Query(default=30, ge=1, le=365)) -> dict:
+    return service.get_nakit_dashboard(gun=gun)
 
 
 @api.get("/firmalar")
@@ -183,8 +193,9 @@ def firma_faturalari_getir(firma_adi: str) -> list[dict]:
 def faturalari_listele(
     durum: str | None = Query(default=None),
     firma_adi: str | None = Query(default=None),
+    yon: str | None = Query(default=None),
 ) -> list[dict]:
-    return service.list_faturalar(durum=durum, firma_adi=firma_adi)
+    return service.list_faturalar(durum=durum, firma_adi=firma_adi, yon=yon)
 
 
 @api.post("/faturalar")
@@ -200,6 +211,7 @@ def fatura_ekle(payload: FaturaCreatePayload) -> dict:
             kategori=payload.kategori,
             oncelik=payload.oncelik,
             odeme_periyodu_gun=payload.odeme_periyodu_gun,
+            yon=payload.yon,
         )
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc

@@ -42,6 +42,7 @@ class CashflowService:
             "varsayilan_vade_gunu",
             "bildirim_gun_siniri",
             "otomatik_gecikti",
+            "mevcut_kasa_bakiyesi",
         }
         for anahtar, deger in yeni_ayarlar.items():
             if anahtar in izinli:
@@ -53,6 +54,8 @@ class CashflowService:
         mevcut["varsayilan_odeme_periyodu"] = periyot
         mevcut["varsayilan_vade_gunu"] = periyot
         mevcut["bildirim_gun_siniri"] = int(mevcut.get("bildirim_gun_siniri", 10))
+        if "mevcut_kasa_bakiyesi" in yeni_ayarlar:
+            mevcut["mevcut_kasa_bakiyesi"] = round(float(mevcut.get("mevcut_kasa_bakiyesi", 0)), 2)
         self.store.save_ayarlar(mevcut)
         return mevcut
 
@@ -114,10 +117,52 @@ class CashflowService:
         return sonuc
 
     def _faturalari_odeme_sirasina_gore(self, faturalar: list[dict]) -> list[dict]:
-        sirali = sorted(faturalar, key=self._odeme_sira_skoru)
-        for i, fatura in enumerate(sirali, start=1):
-            fatura["odeme_sira_no"] = i
-        return sirali
+        return self._faturalari_listeye_hazirla(faturalar)
+
+    def _faturalari_listeye_hazirla(self, faturalar: list[dict]) -> list[dict]:
+        sonuc: list[dict] = []
+        eklenen: set[str] = set()
+        gider_no = 1
+        gelir_no = 1
+
+        bloklar = [
+            ("GIDER", "GECIKTI"),
+            ("GELIR", "GECIKTI"),
+            ("GIDER", "BEKLIYOR"),
+            ("GELIR", "BEKLIYOR"),
+        ]
+        for yon, durum in bloklar:
+            aday = [
+                x
+                for x in faturalar
+                if x.get("yon", "GIDER") == yon
+                and x["durum"] == durum
+                and x["fatura_no"] not in eklenen
+            ]
+            for fatura in sorted(aday, key=self._odeme_sira_skoru):
+                eklenen.add(fatura["fatura_no"])
+                if yon == "GIDER":
+                    fatura["odeme_sira_no"] = gider_no
+                    fatura["tahsilat_sira_no"] = 0
+                    gider_no += 1
+                else:
+                    fatura["tahsilat_sira_no"] = gelir_no
+                    fatura["odeme_sira_no"] = 0
+                    gelir_no += 1
+                sonuc.append(fatura)
+
+        kapali = [
+            x
+            for x in faturalar
+            if x["durum"] in {"ODENDI", "IPTAL"} and x["fatura_no"] not in eklenen
+        ]
+        kapali.sort(key=lambda x: x.get("vade_tarihi", ""), reverse=True)
+        for fatura in kapali:
+            fatura["odeme_sira_no"] = 0
+            fatura["tahsilat_sira_no"] = 0
+            sonuc.append(fatura)
+
+        return sonuc
 
     def sync_all(self) -> tuple[list[dict], list[dict]]:
         firmalar = self.store.get_firmalar()
@@ -140,6 +185,7 @@ class CashflowService:
             fatura.setdefault("arsiv_mi", False)
             fatura.setdefault("kategori", "genel")
             fatura.setdefault("oncelik", "orta")
+            fatura.setdefault("yon", "GIDER")
             fatura.setdefault("tahsilat_gecmisi", [])
 
             if (
@@ -194,7 +240,12 @@ class CashflowService:
         firmalar, _ = self.sync_all()
         return firmalar
 
-    def list_faturalar(self, durum: str | None = None, firma_adi: str | None = None) -> list[dict]:
+    def list_faturalar(
+        self,
+        durum: str | None = None,
+        firma_adi: str | None = None,
+        yon: str | None = None,
+    ) -> list[dict]:
         firmalar, faturalar = self.sync_all()
         firma_periyot_haritasi = self._firma_periyot_haritasi(firmalar)
         sonuc = [
@@ -209,7 +260,15 @@ class CashflowService:
 
         if firma_adi:
             hedef = firma_adi.strip().casefold()
-            sonuc = [x for x in sonuc if x["firma_adi"].strip().casefold().startswith(hedef)]
+            sonuc = [
+                x
+                for x in sonuc
+                if hedef in x["firma_adi"].strip().casefold()
+            ]
+
+        if yon:
+            yon = yon.upper()
+            sonuc = [x for x in sonuc if x.get("yon", "GIDER") == yon]
 
         return self._faturalari_odeme_sirasina_gore(sonuc)
 
@@ -341,6 +400,135 @@ class CashflowService:
             "toplam_odenen": round(sum(x["tutar"] for x in odenen), 2),
         }
 
+    def _fatura_donemde_mi(self, fatura: dict, bugun: date, donem_son: date) -> bool:
+        if fatura["durum"] not in {"BEKLIYOR", "GECIKTI"}:
+            return False
+        if fatura["durum"] == "GECIKTI":
+            return True
+        vade = date.fromisoformat(fatura["vade_tarihi"])
+        return bugun <= vade <= donem_son
+
+    def _yon_ozet_hesapla(
+        self,
+        faturalar: list[dict],
+        yon: str,
+        bugun: date,
+        bildirim_son: date,
+        donem_son: date,
+    ) -> dict:
+        hedef = [x for x in faturalar if x.get("yon", "GIDER") == yon]
+        bekleyen = [x for x in hedef if x["durum"] == "BEKLIYOR"]
+        geciken = [x for x in hedef if x["durum"] == "GECIKTI"]
+        tamamlanan = [x for x in hedef if x["durum"] == "ODENDI"]
+        acik = bekleyen + geciken
+
+        yaklasan = []
+        for fatura in bekleyen:
+            vade = date.fromisoformat(fatura["vade_tarihi"])
+            if bugun <= vade <= bildirim_son:
+                yaklasan.append(fatura)
+
+        donem_ici = []
+        donem_faturalar = []
+        for fatura in acik:
+            vade = date.fromisoformat(fatura["vade_tarihi"])
+            if fatura["durum"] == "GECIKTI":
+                donem_faturalar.append(fatura)
+            elif bugun <= vade <= donem_son:
+                donem_ici.append(fatura)
+                donem_faturalar.append(fatura)
+
+        return {
+            "bekleyen": round(sum(x["tutar"] for x in bekleyen), 2),
+            "geciken": round(sum(x["tutar"] for x in geciken), 2),
+            "bekleyen_toplam": round(sum(x["tutar"] for x in acik), 2),
+            "tamamlanan": round(sum(x["tutar"] for x in tamamlanan), 2),
+            "yaklasan": round(sum(x["tutar"] for x in yaklasan), 2),
+            "yaklasan_adedi": len(yaklasan),
+            "geciken_adedi": len(geciken),
+            "bekleyen_adedi": len(bekleyen),
+            "donem_ici": round(sum(x["tutar"] for x in donem_ici), 2),
+            "donem_ici_adedi": len(donem_ici),
+            "donem_toplam": round(sum(x["tutar"] for x in donem_faturalar), 2),
+            "donem_adedi": len(donem_faturalar),
+            "donem_geciken": round(sum(x["tutar"] for x in geciken), 2),
+            "donem_geciken_adedi": len(geciken),
+        }
+
+    def get_nakit_dashboard(self, gun: int = 30) -> dict:
+        faturalar = self.list_faturalar()
+        ayarlar = self.get_ayarlar()
+        mevcut_kasa = round(float(ayarlar.get("mevcut_kasa_bakiyesi", 0)), 2)
+        gun_siniri = int(ayarlar.get("bildirim_gun_siniri", 10))
+        bugun = date.today()
+        bildirim_son = bugun + timedelta(days=gun_siniri)
+        donem_son = bugun + timedelta(days=max(1, gun))
+
+        gelen = self._yon_ozet_hesapla(faturalar, "GELIR", bugun, bildirim_son, donem_son)
+        giden = self._yon_ozet_hesapla(faturalar, "GIDER", bugun, bildirim_son, donem_son)
+
+        net_durum = round(gelen["donem_toplam"] + mevcut_kasa - giden["donem_toplam"], 2)
+        bulunmasi_gereken = round(
+            max(0, giden["donem_toplam"] - gelen["donem_toplam"] - mevcut_kasa), 2
+        )
+
+        hareketler = []
+        for fatura in faturalar:
+            if not self._fatura_donemde_mi(fatura, bugun, donem_son):
+                continue
+            hareketler.append(
+                {
+                    "fatura_no": fatura["fatura_no"],
+                    "firma_adi": fatura["firma_adi"],
+                    "tutar": fatura["tutar"],
+                    "para_birimi": fatura.get("para_birimi", "TRY"),
+                    "vade_tarihi": fatura["vade_tarihi"],
+                    "durum": fatura["durum"],
+                    "yon": fatura.get("yon", "GIDER"),
+                    "kalan_gun": fatura.get("kalan_gun"),
+                }
+            )
+        hareketler.sort(key=lambda x: (0 if x["durum"] == "GECIKTI" else 1, x["vade_tarihi"]))
+
+        def _yaklasan_liste(yon: str, limit: int = 8) -> list[dict]:
+            aday = [
+                x
+                for x in faturalar
+                if x.get("yon", "GIDER") == yon and self._fatura_donemde_mi(x, bugun, donem_son)
+            ]
+            aday.sort(
+                key=lambda x: (
+                    0 if x["durum"] == "GECIKTI" else 1,
+                    x.get("kalan_gun") if x.get("kalan_gun") is not None else 999,
+                    x["vade_tarihi"],
+                )
+            )
+            return [
+                {
+                    "fatura_no": x["fatura_no"],
+                    "firma_adi": x["firma_adi"],
+                    "tutar": x["tutar"],
+                    "para_birimi": x.get("para_birimi", "TRY"),
+                    "vade_tarihi": x["vade_tarihi"],
+                    "durum": x["durum"],
+                    "kalan_gun": x.get("kalan_gun"),
+                }
+                for x in aday[:limit]
+            ]
+
+        return {
+            "mevcut_kasa": mevcut_kasa,
+            "donem_gun": gun,
+            "bildirim_gun_siniri": gun_siniri,
+            "gelen": gelen,
+            "giden": giden,
+            "bulunmasi_gereken": bulunmasi_gereken,
+            "net_durum": net_durum,
+            "yaklasan_hareketler": hareketler,
+            "yaklasan_odemeler": _yaklasan_liste("GIDER"),
+            "yaklasan_tahsilatlar": _yaklasan_liste("GELIR"),
+        }
+
     def get_bildirimler(self) -> dict:
         ayarlar = self.get_ayarlar()
         gun_siniri = int(ayarlar.get("bildirim_gun_siniri", 10))
@@ -388,6 +576,7 @@ class CashflowService:
         kategori: str = "genel",
         oncelik: str = "orta",
         odeme_periyodu_gun: int | None = None,
+        yon: str = "GIDER",
     ) -> dict:
         self.sync_all()
         firma = self.get_firma_by_name(firma_adi)
@@ -418,6 +607,9 @@ class CashflowService:
         durum = durum.upper()
         if durum not in {"BEKLIYOR", "GECIKTI", "ODENDI", "IPTAL"}:
             raise ValueError("Gecersiz durum.")
+        yon = yon.upper()
+        if yon not in {"GIDER", "GELIR"}:
+            raise ValueError("Gecersiz yon.")
 
         fatura_dict = {
             "fatura_id": yeni_id,
@@ -435,6 +627,7 @@ class CashflowService:
             "arsiv_mi": False,
             "kategori": kategori,
             "oncelik": self._hesapla_oncelik({"durum": durum, "vade_tarihi": vade_tarihi}, periyot),
+            "yon": yon,
             "tahsilat_gecmisi": [
                 {
                     "baslik": "Fatura Oluşturuldu",

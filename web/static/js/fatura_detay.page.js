@@ -20,6 +20,7 @@ function sayfayiDoldur(fatura) {
     ? Utils.formatTarihUzun(fatura.odeme_tarihi)
     : "-";
   document.getElementById("detay-tutar").textContent = Utils.formatTRY(fatura.tutar, fatura.para_birimi);
+  document.getElementById("detay-yon").innerHTML = Utils.yonEtiketi(fatura.yon || "GIDER");
   document.getElementById("detay-kategori").textContent = fatura.kategori || "genel";
   document.getElementById("detay-oncelik").textContent = Utils.oncelikMetin(fatura.oncelik);
   document.getElementById("detay-vade-gun").textContent = Utils.periyotEtiketi(fatura.odeme_periyodu_gun || 30);

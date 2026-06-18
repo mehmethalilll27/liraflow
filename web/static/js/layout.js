@@ -100,7 +100,23 @@ const Layout = {
     if (kisaEl) kisaEl.textContent = ad.split(" ")[0] || "Hesabım";
   },
 
+  globalAramaBagla() {
+    const panelAra = document.getElementById("panel-ara");
+    if (!panelAra || panelAra.dataset.aramaBagli === "1") return;
+    panelAra.dataset.aramaBagli = "1";
+    panelAra.addEventListener("keydown", (e) => {
+      if (e.key !== "Enter") return;
+      e.preventDefault();
+      const arama = panelAra.value.trim();
+      if (arama) {
+        window.location.href = `/faturalar?firma=${encodeURIComponent(arama)}`;
+      }
+    });
+  },
+
   bagla() {
+    this.globalAramaBagla();
+
     const bildirimBtn = document.getElementById("bildirim-btn");
     const bildirimPanel = document.getElementById("bildirim-panel");
     const hesapBtn = document.getElementById("hesap-btn");

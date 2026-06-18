@@ -186,8 +186,8 @@ Ayarlar
 <!-- Page Heading -->
 <div class="mb-xl flex justify-between items-end">
 <div>
-<h2 class="font-headline-lg text-headline-lg text-on-surface">Panel</h2>
-<p class="font-body-md text-body-md text-on-surface-variant">Genel nakit akışı ve fatura durumu özeti.</p>
+<h2 class="font-headline-lg text-headline-lg text-on-surface">Nakit Dashboard</h2>
+<p class="font-body-md text-body-md text-on-surface-variant">Gelen ve giden paranızı tek bakışta görün; ne kadar para bulmanız gerektiğini hesaplayın.</p>
 </div>
 <button type="button" id="yeni-fatura-btn" class="flex items-center gap-xs bg-primary text-on-primary px-lg py-sm rounded-xl font-label-md hover:opacity-90 transition-opacity">
 <span class="material-symbols-outlined !text-[18px]" data-icon="add">add</span>
@@ -205,80 +205,116 @@ Yaklaşan Bildirimler (<span id="panel-uyari-sayi">0</span>)
 </div>
 <div id="panel-uyari-icerik" class="px-lg py-md space-y-2 max-h-48 overflow-y-auto"></div>
 </div>
-<!-- Summary Cards (Bento Grid Style) -->
-<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-gutter mb-xl">
-<div class="bg-surface-container-lowest p-lg rounded-xl border border-outline-variant shadow-[0px_1px_3px_rgba(0,0,0,0.05)] hover:shadow-md transition-shadow">
+<!-- Dönem Seçici -->
+<div class="flex flex-wrap gap-sm mb-lg" id="donem-filtre-bar">
+<button type="button" class="px-lg py-sm rounded-full font-label-md text-label-md bg-primary text-on-primary" data-gun="30">30 Gün</button>
+<button type="button" class="px-lg py-sm rounded-full font-label-md text-label-md bg-surface-container border border-outline-variant text-on-surface-variant hover:bg-surface-container-high transition-all" data-gun="60">60 Gün</button>
+<button type="button" class="px-lg py-sm rounded-full font-label-md text-label-md bg-surface-container border border-outline-variant text-on-surface-variant hover:bg-surface-container-high transition-all" data-gun="90">90 Gün</button>
+</div>
+<!-- Hero Cards -->
+<div class="grid grid-cols-1 md:grid-cols-3 gap-gutter mb-xl">
+<div class="bg-surface-container-lowest p-lg rounded-xl border border-secondary/30 shadow-[0px_1px_3px_rgba(0,0,0,0.05)] hover:shadow-md transition-shadow border-l-4 border-l-secondary">
 <div class="flex items-center justify-between mb-sm">
-<span class="font-label-md text-label-md text-on-surface-variant">Toplam Fatura</span>
-<span class="material-symbols-outlined text-primary/50" data-icon="receipt_long">receipt_long</span>
+<span class="font-label-md text-label-md text-on-surface-variant">Gelen Para</span>
+<span class="material-symbols-outlined text-secondary">south_west</span>
 </div>
-<div class="font-headline-md text-headline-md text-on-surface" id="ozet-fatura-adedi">-</div>
-<p class="mt-sm text-[11px] text-on-surface-variant font-medium" id="ozet-fatura-alt">-</p>
+<div class="font-headline-md text-headline-md text-secondary" id="dash-gelen-toplam">-</div>
+<p class="mt-sm text-[11px] text-on-surface-variant font-medium" id="dash-gelen-alt">-</p>
 </div>
-<div class="bg-surface-container-lowest p-lg rounded-xl border border-outline-variant shadow-[0px_1px_3px_rgba(0,0,0,0.05)] hover:shadow-md transition-shadow">
+<div class="bg-surface-container-lowest p-lg rounded-xl border border-outline-variant shadow-[0px_1px_3px_rgba(0,0,0,0.05)] hover:shadow-md transition-shadow border-l-4 border-l-error">
 <div class="flex items-center justify-between mb-sm">
-<span class="font-label-md text-label-md text-on-surface-variant">Bekleyen Ödemeler</span>
-<span class="material-symbols-outlined text-primary/50" data-icon="account_balance_wallet">account_balance_wallet</span>
+<span class="font-label-md text-label-md text-on-surface-variant">Giden Para</span>
+<span class="material-symbols-outlined text-error">north_east</span>
 </div>
-<div class="font-headline-md text-headline-md text-on-surface" id="ozet-odenecek">-</div>
-<p class="mt-sm text-[11px] text-on-surface-variant font-medium" id="ozet-odenecek-alt">-</p>
+<div class="font-headline-md text-headline-md text-error" id="dash-giden-toplam">-</div>
+<p class="mt-sm text-[11px] text-on-surface-variant font-medium" id="dash-giden-alt">-</p>
 </div>
-<div class="bg-surface-container-lowest p-lg rounded-xl border border-outline-variant shadow-[0px_1px_3px_rgba(0,0,0,0.05)] hover:shadow-md transition-shadow" id="ozet-geciken-kart">
+<div class="bg-primary p-lg rounded-xl shadow-md border border-primary-container" id="dash-bul-kart">
 <div class="flex items-center justify-between mb-sm">
-<span class="font-label-md text-label-md text-on-surface-variant">Geciken Ödemeler</span>
-<span class="material-symbols-outlined text-error/50" data-icon="warning">warning</span>
+<span class="font-label-md text-label-md text-on-primary-container">Bulmam Gereken</span>
+<span class="material-symbols-outlined text-secondary-fixed">account_balance_wallet</span>
 </div>
-<div class="font-headline-md text-headline-md text-error" id="ozet-geciken">-</div>
-<p class="mt-sm text-[11px] text-on-surface-variant font-medium" id="ozet-geciken-alt">-</p>
-</div>
-<div class="bg-surface-container-lowest p-lg rounded-xl border border-outline-variant shadow-[0px_1px_3px_rgba(0,0,0,0.05)] hover:shadow-md transition-shadow">
-<div class="flex items-center justify-between mb-sm">
-<span class="font-label-md text-label-md text-on-surface-variant">Tahsil Edilen</span>
-<span class="material-symbols-outlined text-secondary/50" data-icon="check_circle">check_circle</span>
-</div>
-<div class="font-headline-md text-headline-md text-on-secondary-container" id="ozet-odenen">-</div>
-<p class="mt-sm text-[11px] text-on-secondary-container/80 font-medium" id="ozet-odenen-alt">-</p>
+<div class="font-headline-md text-headline-md text-on-primary" id="dash-bul-toplam">-</div>
+<p class="mt-sm text-[11px] text-on-primary-container font-medium" id="dash-bul-alt">-</p>
 </div>
 </div>
-<!-- Filter Bar -->
-<div class="flex flex-wrap gap-sm mb-lg" id="durum-filtre-bar">
-<button type="button" class="px-lg py-sm rounded-full font-label-md text-label-md bg-primary text-on-primary" data-durum="">Tümü</button>
-<button type="button" class="px-lg py-sm rounded-full font-label-md text-label-md bg-surface-container border border-outline-variant text-on-surface-variant hover:bg-surface-container-high transition-all" data-durum="BEKLIYOR">Bekliyor</button>
-<button type="button" class="px-lg py-sm rounded-full font-label-md text-label-md bg-surface-container border border-outline-variant text-on-surface-variant hover:bg-surface-container-high transition-all" data-durum="GECIKTI">Gecikti</button>
-<button type="button" class="px-lg py-sm rounded-full font-label-md text-label-md bg-surface-container border border-outline-variant text-on-surface-variant hover:bg-surface-container-high transition-all" data-durum="ODENDI">Ödendi</button>
-<button type="button" class="px-lg py-sm rounded-full font-label-md text-label-md bg-surface-container border border-outline-variant text-on-surface-variant hover:bg-surface-container-high transition-all" data-durum="IPTAL">İptal</button>
+<!-- Kasa + Nakit Dengesi -->
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-gutter mb-xl">
+<div class="bg-surface-container-lowest p-lg rounded-xl border border-outline-variant">
+<p class="font-label-md text-label-md text-on-surface-variant mb-xs">Mevcut Kasa</p>
+<div class="font-headline-md text-headline-md text-on-surface" id="dash-kasa">-</div>
+<a href="/ayarlar" class="text-xs text-primary font-semibold hover:underline mt-sm inline-block">Kasayı düzenle →</a>
 </div>
-<!-- Table Section -->
+<div class="lg:col-span-2 bg-surface-container-lowest p-lg rounded-xl border border-outline-variant">
+<div class="flex justify-between items-center mb-md">
+<p class="font-label-md text-label-md text-on-surface-variant">Nakit Dengesi</p>
+<p class="text-xs font-semibold" id="dash-net-durum">-</p>
+</div>
+<div class="h-4 rounded-full bg-surface-container-high overflow-hidden flex">
+<div class="h-full bg-secondary transition-all duration-500" id="dash-bar-gelen" style="width:50%"></div>
+<div class="h-full bg-error transition-all duration-500" id="dash-bar-giden" style="width:50%"></div>
+</div>
+<div class="flex justify-between mt-sm text-[11px] font-semibold">
+<span class="text-secondary" id="dash-bar-gelen-etiket">Gelen</span>
+<span class="text-error" id="dash-bar-giden-etiket">Giden</span>
+</div>
+</div>
+</div>
+<!-- Yaklaşan Hareketler -->
+<div class="bg-surface-container-lowest rounded-xl border border-outline-variant overflow-hidden shadow-sm mb-xl">
+<div class="px-lg py-md border-b border-outline-variant flex justify-between items-center bg-surface">
+<h3 class="font-headline-md text-headline-md text-on-surface">Yaklaşan Hareketler</h3>
+<span class="text-xs text-on-surface-variant" id="dash-hareket-sayi">-</span>
+</div>
+<div id="dash-hareket-liste" class="divide-y divide-outline-variant/50 max-h-64 overflow-y-auto"></div>
+</div>
+<!-- İki Sütun Tablolar -->
+<div class="grid grid-cols-1 xl:grid-cols-2 gap-gutter">
 <div class="bg-surface-container-lowest rounded-xl border border-outline-variant overflow-hidden shadow-sm">
 <div class="px-lg py-md border-b border-outline-variant flex justify-between items-center bg-surface">
-<h3 class="font-headline-md text-headline-md text-on-surface">Son Faturalar</h3>
-<a href="/faturalar" class="text-primary font-label-md text-label-md hover:underline">Tümünü Gör</a>
+<h3 class="font-headline-md text-headline-md text-on-surface">Yaklaşan Ödemeler</h3>
+<a href="/faturalar?yon=GIDER" class="text-primary font-label-md text-label-md hover:underline">Tümünü Gör</a>
 </div>
 <div class="overflow-x-auto">
 <table class="w-full text-left border-collapse">
 <thead>
 <tr class="bg-surface-container/30 border-b border-outline-variant">
-<th class="px-lg py-lg font-label-md text-label-md text-on-surface-variant uppercase tracking-wider">Fatura No</th>
-<th class="px-lg py-lg font-label-md text-label-md text-on-surface-variant uppercase tracking-wider">Firma</th>
-<th class="px-lg py-lg font-label-md text-label-md text-on-surface-variant uppercase tracking-wider">Durum</th>
-<th class="px-lg py-lg font-label-md text-label-md text-on-surface-variant uppercase tracking-wider text-right">Tutar</th>
-<th class="px-lg py-lg font-label-md text-label-md text-on-surface-variant uppercase tracking-wider">Vade</th>
-<th class="px-lg py-lg font-label-md text-label-md text-on-surface-variant uppercase tracking-wider text-center">İşlem</th>
+<th class="px-lg py-md font-label-md text-label-md text-on-surface-variant uppercase">Firma</th>
+<th class="px-lg py-md font-label-md text-label-md text-on-surface-variant uppercase text-right">Tutar</th>
+<th class="px-lg py-md font-label-md text-label-md text-on-surface-variant uppercase">Vade</th>
 </tr>
 </thead>
-<tbody id="fatura-tablo-body" class="divide-y divide-outline-variant/50"></tbody>
+<tbody id="dash-odeme-body" class="divide-y divide-outline-variant/50"></tbody>
 </table>
+</div>
+</div>
+<div class="bg-surface-container-lowest rounded-xl border border-outline-variant overflow-hidden shadow-sm">
+<div class="px-lg py-md border-b border-outline-variant flex justify-between items-center bg-surface">
+<h3 class="font-headline-md text-headline-md text-on-surface">Yaklaşan Tahsilatlar</h3>
+<a href="/faturalar?yon=GELIR" class="text-primary font-label-md text-label-md hover:underline">Tümünü Gör</a>
+</div>
+<div class="overflow-x-auto">
+<table class="w-full text-left border-collapse">
+<thead>
+<tr class="bg-surface-container/30 border-b border-outline-variant">
+<th class="px-lg py-md font-label-md text-label-md text-on-surface-variant uppercase">Firma</th>
+<th class="px-lg py-md font-label-md text-label-md text-on-surface-variant uppercase text-right">Tutar</th>
+<th class="px-lg py-md font-label-md text-label-md text-on-surface-variant uppercase">Vade</th>
+</tr>
+</thead>
+<tbody id="dash-tahsilat-body" class="divide-y divide-outline-variant/50"></tbody>
+</table>
+</div>
 </div>
 </div>
 </div>
 </main>
 <!-- Micro-interaction Scripts -->
-<script src="/static/js/utils.js"></script>
-<script src="/static/js/apiService.js"></script>
-<script src="/static/js/settingsService.js"></script>
-<script src="/static/js/authService.js"></script>
-<script src="/static/js/layout.js"></script>
-<script src="/static/js/dashboardService.js"></script>
-<script src="/static/js/invoiceService.js"></script>
-<script src="/static/js/panel.page.js"></script>
+<script src="/static/js/utils.js?v=2"></script>
+<script src="/static/js/apiService.js?v=2"></script>
+<script src="/static/js/settingsService.js?v=2"></script>
+<script src="/static/js/authService.js?v=2"></script>
+<script src="/static/js/layout.js?v=3"></script>
+<script src="/static/js/dashboardService.js?v=2"></script>
+<script src="/static/js/panel.page.js?v=4"></script>
 </body></html>

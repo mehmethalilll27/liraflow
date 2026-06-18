@@ -125,6 +125,21 @@ const Utils = {
     return `<span class="inline-flex items-center px-sm py-xs rounded-lg text-[10px] font-bold uppercase tracking-tight border ${sinif}">${this.periyotEtiketi(normalize)}</span>`;
   },
 
+  yonEtiketi(yon) {
+    const harita = {
+      GELIR: {
+        metin: "GELİR",
+        sinif: "bg-secondary-container/40 text-on-secondary-container border-secondary/20",
+      },
+      GIDER: {
+        metin: "GİDER",
+        sinif: "bg-error-container/30 text-on-error-container border-error/20",
+      },
+    };
+    const bilgi = harita[yon] || harita.GIDER;
+    return `<span class="inline-flex items-center px-sm py-xs rounded-lg text-[10px] font-bold uppercase tracking-tight border ${bilgi.sinif}">${bilgi.metin}</span>`;
+  },
+
   odemeSiraBadge(siraNo, durum) {
     if (!siraNo || siraNo <= 0) {
       return `<span class="text-on-surface-variant text-xs">—</span>`;
@@ -132,6 +147,17 @@ const Utils = {
     const sinif =
       durum !== "ODENDI" && durum !== "IPTAL" && siraNo <= 3
         ? "bg-primary text-on-primary"
+        : "bg-surface-container-high text-on-surface-variant";
+    return `<span class="inline-flex items-center justify-center w-7 h-7 rounded-full text-xs font-bold ${sinif}">${siraNo}</span>`;
+  },
+
+  tahsilatSiraBadge(siraNo, durum) {
+    if (!siraNo || siraNo <= 0) {
+      return `<span class="text-on-surface-variant text-xs">—</span>`;
+    }
+    const sinif =
+      durum !== "ODENDI" && durum !== "IPTAL" && siraNo <= 3
+        ? "bg-secondary text-on-secondary"
         : "bg-surface-container-high text-on-surface-variant";
     return `<span class="inline-flex items-center justify-center w-7 h-7 rounded-full text-xs font-bold ${sinif}">${siraNo}</span>`;
   },

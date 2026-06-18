@@ -1,8 +1,9 @@
 const InvoiceService = {
-  listele({ durum, firma_adi } = {}) {
+  listele({ durum, firma_adi, yon } = {}) {
     const query = new URLSearchParams();
     if (durum) query.set("durum", durum);
     if (firma_adi) query.set("firma_adi", firma_adi);
+    if (yon) query.set("yon", yon);
     const ek = query.toString() ? `?${query.toString()}` : "";
     return ApiService.istek(`/faturalar${ek}`);
   },

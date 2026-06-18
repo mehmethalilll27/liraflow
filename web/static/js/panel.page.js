@@ -1,4 +1,4 @@
-let aktifDurumFiltre = "";
+let aktifDonemGun = 30;
 
 const PANEL_UYARI_KAPALI = "panel_uyari_kapali";
 const PANEL_UYARI_ACIK = "panel_uyari_acik";
@@ -77,98 +77,190 @@ function panelUyariBagla() {
   }
 }
 
-function filtreButonSinifi(secili) {
+function donemButonSinifi(secili) {
   return secili
     ? "px-lg py-sm rounded-full font-label-md text-label-md bg-primary text-on-primary"
     : "px-lg py-sm rounded-full font-label-md text-label-md bg-surface-container border border-outline-variant text-on-surface-variant hover:bg-surface-container-high transition-all";
 }
 
-function faturaSatirCiz(f) {
-  const iptalSinif = f.durum === "IPTAL" ? " opacity-60" : "";
-  const tutarSinif = f.durum === "IPTAL" ? " line-through" : "";
+function tabloSatirCiz(f) {
+  const gecikmeSinif = f.durum === "GECIKTI" ? "text-error" : "text-on-surface-variant";
   return `
-    <tr class="hover:bg-surface-container-low transition-colors group cursor-pointer${iptalSinif}" data-fatura-no="${f.fatura_no}">
-      <td class="px-lg py-lg font-mono-data text-mono-data text-on-surface">${f.fatura_no}</td>
-      <td class="px-lg py-lg font-body-md text-body-md font-semibold text-on-surface">
-        <div class="flex items-center gap-sm flex-wrap">
-          <span>${f.firma_adi}</span>
-          ${Utils.periyotBadge(f.odeme_periyodu_gun)}
-        </div>
-      </td>
-      <td class="px-lg py-lg">${Utils.durumEtiketi(f.durum)}</td>
-      <td class="px-lg py-lg font-mono-data text-mono-data text-right font-bold${tutarSinif}">${Utils.formatTRY(f.tutar, f.para_birimi)}</td>
-      <td class="px-lg py-lg font-body-md text-body-md text-on-surface-variant">${Utils.formatTarih(f.vade_tarihi)}</td>
-      <td class="px-lg py-lg text-center">
-        <a href="${Utils.faturaDetayUrl(f.fatura_no)}" class="p-2 hover:bg-surface-container rounded-full text-on-surface-variant inline-flex" title="Detay">
-          <span class="material-symbols-outlined">visibility</span>
-        </a>
-      </td>
+    <tr class="hover:bg-surface-container-low transition-colors cursor-pointer" data-fatura-no="${f.fatura_no}">
+      <td class="px-lg py-md font-body-md text-body-md font-semibold text-on-surface">${f.firma_adi}</td>
+      <td class="px-lg py-md font-mono-data text-mono-data text-right font-bold">${Utils.formatTRY(f.tutar, f.para_birimi)}</td>
+      <td class="px-lg py-md font-body-md text-body-md ${gecikmeSinif}">${Utils.formatTarih(f.vade_tarihi)} · ${Utils.kalanGunMetin(f.kalan_gun, f.durum)}</td>
     </tr>
   `;
 }
 
-async function ozetiYukle() {
-  const ozet = await DashboardService.ozetGetir();
-
-  document.getElementById("ozet-fatura-adedi").textContent = `${ozet.fatura_adedi} adet`;
-  document.getElementById("ozet-fatura-alt").textContent =
-    `${ozet.bekleyen_adedi} bekliyor · ${ozet.geciken_adedi} gecikmiş · ${ozet.odenen_adedi} ödendi`;
-
-  document.getElementById("ozet-odenecek").textContent = Utils.formatTRY(ozet.toplam_odenecek);
-  const odenecekAlt = document.getElementById("ozet-odenecek-alt");
-  if (ozet.yaklasan_adedi > 0) {
-    odenecekAlt.textContent = `${ozet.yaklasan_adedi} fatura — ${ozet.bildirim_gun_siniri} gün içinde vade (${Utils.formatTRY(ozet.yaklasan_odenecek)})`;
-  } else if (ozet.bekleyen_adedi > 0) {
-    odenecekAlt.textContent = `${ozet.bekleyen_adedi} bekleyen fatura`;
-  } else {
-    odenecekAlt.textContent = "Bekleyen ödeme yok";
-  }
-
-  const gecikenKart = document.getElementById("ozet-geciken-kart");
-  const gecikenDeger = document.getElementById("ozet-geciken");
-  const gecikenAlt = document.getElementById("ozet-geciken-alt");
-  gecikenDeger.textContent = Utils.formatTRY(ozet.toplam_geciken);
-  if (ozet.geciken_adedi > 0) {
-    gecikenKart.classList.add("border-l-4", "border-l-error");
-    gecikenDeger.classList.add("text-error");
-    gecikenAlt.className = "mt-sm text-[11px] text-error font-semibold";
-    gecikenAlt.textContent = `${ozet.geciken_adedi} fatura · ${ozet.geciken_firma_sayisi} firmada gecikme`;
-  } else {
-    gecikenKart.classList.remove("border-l-4", "border-l-error");
-    gecikenDeger.classList.remove("text-error");
-    gecikenAlt.className = "mt-sm text-[11px] text-on-surface-variant font-medium";
-    gecikenAlt.textContent = "Geciken fatura yok";
-  }
-
-  document.getElementById("ozet-odenen").textContent = Utils.formatTRY(ozet.toplam_odenen);
-  document.getElementById("ozet-odenen-alt").textContent =
-    ozet.odenen_adedi > 0 ? `${ozet.odenen_adedi} fatura tahsil edildi` : "Henüz tahsilat yok";
+function bosTabloMesaji(metin) {
+  return `<tr><td colspan="3" class="px-lg py-lg text-center text-on-surface-variant text-sm">${metin}</td></tr>`;
 }
 
-async function faturalariYukle() {
-  const body = document.getElementById("fatura-tablo-body");
-  const faturalar = await InvoiceService.listele(
-    aktifDurumFiltre ? { durum: aktifDurumFiltre } : {}
-  );
-  const sonBes = faturalar.slice(0, 8);
-  if (!sonBes.length) {
-    body.innerHTML = `<tr><td colspan="6" class="px-lg py-lg text-center text-on-surface-variant">Kayıt bulunamadı.</td></tr>`;
-    return;
-  }
-  body.innerHTML = sonBes.map(faturaSatirCiz).join("");
+function hareketSatirCiz(h) {
+  const gelir = h.yon === "GELIR";
+  const sinif = gelir ? "text-secondary" : "text-error";
+  const ikon = gelir ? "south_west" : "north_east";
+  const etiket = gelir ? "Tahsilat" : "Ödeme";
+  return `
+    <a href="${Utils.faturaDetayUrl(h.fatura_no)}" class="flex items-center justify-between px-lg py-md hover:bg-surface-container-low transition-colors">
+      <div class="flex items-center gap-md min-w-0">
+        <span class="material-symbols-outlined ${sinif}">${ikon}</span>
+        <div class="min-w-0">
+          <p class="font-body-md text-body-md font-semibold text-on-surface truncate">${h.firma_adi}</p>
+          <p class="text-xs text-on-surface-variant">${etiket} · ${h.fatura_no} · ${Utils.kalanGunMetin(h.kalan_gun, h.durum)}</p>
+        </div>
+      </div>
+      <div class="text-right shrink-0 ml-md">
+        <p class="font-mono-data font-bold ${sinif}">${Utils.formatTRY(h.tutar, h.para_birimi)}</p>
+        <p class="text-xs text-on-surface-variant">${Utils.formatTarih(h.vade_tarihi)}</p>
+      </div>
+    </a>
+  `;
 }
 
-function filtreButonlariniBagla() {
-  const bar = document.getElementById("durum-filtre-bar");
+function el(id) {
+  return document.getElementById(id);
+}
+
+function metinAyarla(id, deger) {
+  const node = el(id);
+  if (node) node.textContent = deger;
+}
+
+function dashboardRender(d) {
+  if (!d || !d.gelen || !d.giden) {
+    throw new Error("Dashboard verisi eksik veya hatalı.");
+  }
+
+  const { gelen, giden } = d;
+  const donem = d.donem_gun || 30;
+  const gelenDonem = gelen.donem_toplam ?? gelen.bekleyen_toplam;
+  const gidenDonem = giden.donem_toplam ?? giden.bekleyen_toplam;
+
+  metinAyarla("dash-gelen-toplam", Utils.formatTRY(gelenDonem));
+  const gelenAltParca = [`${donem} gün içinde`, `${gelen.donem_adedi ?? gelen.bekleyen_adedi} fatura`];
+  if ((gelen.donem_geciken_adedi ?? gelen.geciken_adedi) > 0) {
+    gelenAltParca.push(`${gelen.donem_geciken_adedi ?? gelen.geciken_adedi} gecikmiş`);
+  }
+  if (gelen.donem_ici_adedi > 0) {
+    gelenAltParca.push(`${Utils.formatTRY(gelen.donem_ici)} vadeli`);
+  }
+  metinAyarla("dash-gelen-alt", gelenAltParca.join(" · "));
+
+  metinAyarla("dash-giden-toplam", Utils.formatTRY(gidenDonem));
+  const gidenAltParca = [`${donem} gün içinde`, `${giden.donem_adedi ?? giden.bekleyen_adedi} fatura`];
+  if ((giden.donem_geciken_adedi ?? giden.geciken_adedi) > 0) {
+    gidenAltParca.push(`${Utils.formatTRY(giden.donem_geciken)} gecikmiş`);
+  }
+  if (giden.donem_ici_adedi > 0) {
+    gidenAltParca.push(`${Utils.formatTRY(giden.donem_ici)} vadeli`);
+  }
+  metinAyarla("dash-giden-alt", gidenAltParca.join(" · "));
+
+  const bulKart = el("dash-bul-kart");
+  const bulToplam = el("dash-bul-toplam");
+  const bulAlt = el("dash-bul-alt");
+
+  if (bulToplam && bulAlt) {
+    if (d.bulunmasi_gereken > 0) {
+      bulToplam.textContent = Utils.formatTRY(d.bulunmasi_gereken);
+      bulAlt.textContent = `${donem} gün içinde kapatmanız gereken nakit açığı`;
+      if (bulKart) {
+        bulKart.classList.remove("bg-secondary-container");
+        bulKart.classList.add("bg-primary");
+      }
+    } else {
+      const fazla = Math.abs(d.net_durum);
+      bulToplam.textContent = fazla > 0 ? Utils.formatTRY(fazla) : Utils.formatTRY(0);
+      bulAlt.textContent =
+        d.net_durum >= 0 ? "Yeterli nakit var — ek para bulmanıza gerek yok" : "Nakit dengeniz yeterli";
+      if (bulKart) bulKart.classList.remove("bg-error-container");
+    }
+  }
+
+  metinAyarla("dash-kasa", Utils.formatTRY(d.mevcut_kasa));
+
+  const netEl = el("dash-net-durum");
+  if (netEl) {
+    if (d.net_durum >= 0) {
+      netEl.textContent = `+${Utils.formatTRY(d.net_durum)} fazla`;
+      netEl.className = "text-xs font-semibold text-secondary";
+    } else {
+      netEl.textContent = `${Utils.formatTRY(Math.abs(d.net_durum))} açık`;
+      netEl.className = "text-xs font-semibold text-error";
+    }
+  }
+
+  const toplamBar = gelenDonem + gidenDonem;
+  const gelenYuzde = toplamBar > 0 ? (gelenDonem / toplamBar) * 100 : 50;
+  const gidenYuzde = toplamBar > 0 ? (gidenDonem / toplamBar) * 100 : 50;
+  const barGelen = el("dash-bar-gelen");
+  const barGiden = el("dash-bar-giden");
+  if (barGelen) barGelen.style.width = `${gelenYuzde}%`;
+  if (barGiden) barGiden.style.width = `${gidenYuzde}%`;
+  metinAyarla("dash-bar-gelen-etiket", `Gelen ${Utils.formatTRY(gelenDonem)}`);
+  metinAyarla("dash-bar-giden-etiket", `Giden ${Utils.formatTRY(gidenDonem)}`);
+
+  const hareketler = d.yaklasan_hareketler || [];
+  metinAyarla("dash-hareket-sayi", `${hareketler.length} hareket · ${d.donem_gun} gün`);
+  const hareketListe = el("dash-hareket-liste");
+  if (hareketListe) {
+    hareketListe.innerHTML = hareketler.length
+      ? hareketler.map(hareketSatirCiz).join("")
+      : `<p class="px-lg py-lg text-center text-on-surface-variant text-sm">Bu dönemde yaklaşan hareket yok.</p>`;
+  }
+
+  const odemeBody = el("dash-odeme-body");
+  if (odemeBody) {
+    odemeBody.innerHTML = d.yaklasan_odemeler.length
+      ? d.yaklasan_odemeler.map(tabloSatirCiz).join("")
+      : bosTabloMesaji("Yaklaşan ödeme yok");
+  }
+
+  const tahsilatBody = el("dash-tahsilat-body");
+  if (tahsilatBody) {
+    tahsilatBody.innerHTML = d.yaklasan_tahsilatlar.length
+      ? d.yaklasan_tahsilatlar.map(tabloSatirCiz).join("")
+      : bosTabloMesaji("Yaklaşan tahsilat yok");
+  }
+}
+
+function tabloTiklamaBagla() {
+  ["dash-odeme-body", "dash-tahsilat-body"].forEach((id) => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.addEventListener("click", (e) => {
+      const satir = e.target.closest("[data-fatura-no]");
+      if (satir) {
+        window.location.href = Utils.faturaDetayUrl(satir.getAttribute("data-fatura-no"));
+      }
+    });
+  });
+}
+
+async function dashboardYukle() {
+  const bar = document.getElementById("donem-filtre-bar");
+  if (bar) bar.classList.add("opacity-60", "pointer-events-none");
+  try {
+    const data = await DashboardService.dashboardGetir(aktifDonemGun);
+    dashboardRender(data);
+  } finally {
+    if (bar) bar.classList.remove("opacity-60", "pointer-events-none");
+  }
+}
+
+function donemFiltreBagla() {
+  const bar = document.getElementById("donem-filtre-bar");
   if (!bar) return;
-  bar.querySelectorAll("[data-durum]").forEach((btn) => {
+  bar.querySelectorAll("[data-gun]").forEach((btn) => {
     btn.addEventListener("click", async () => {
-      aktifDurumFiltre = btn.getAttribute("data-durum") || "";
-      bar.querySelectorAll("[data-durum]").forEach((b) => {
-        const secili = b === btn;
-        b.className = filtreButonSinifi(secili);
+      aktifDonemGun = parseInt(btn.getAttribute("data-gun"), 10);
+      bar.querySelectorAll("[data-gun]").forEach((b) => {
+        b.className = donemButonSinifi(b === btn);
       });
-      await faturalariYukle();
+      await dashboardYukle();
     });
   });
 }
@@ -177,10 +269,10 @@ document.addEventListener("DOMContentLoaded", async () => {
   try {
     await Layout.init();
     panelUyariBagla();
-    filtreButonlariniBagla();
-    await ozetiYukle();
+    donemFiltreBagla();
+    tabloTiklamaBagla();
+    await dashboardYukle();
     await panelBildirimleriYukle();
-    await faturalariYukle();
 
     const yeniBtn = document.getElementById("yeni-fatura-btn");
     if (yeniBtn) {
@@ -189,15 +281,6 @@ document.addEventListener("DOMContentLoaded", async () => {
       });
     }
 
-    const panelAra = document.getElementById("panel-ara");
-    if (panelAra) {
-      panelAra.addEventListener("keydown", (e) => {
-        if (e.key === "Enter") {
-          const arama = panelAra.value.trim();
-          if (arama) window.location.href = `/faturalar?firma=${encodeURIComponent(arama)}`;
-        }
-      });
-    }
   } catch (hata) {
     console.error(hata);
     alert(`Veri yüklenemedi: ${hata.message}`);
