@@ -275,7 +275,7 @@ function formPayload() {
     yetkili_kisi: document.getElementById("inputYetkili").value.trim(),
     vergi_no: document.getElementById("inputVergiNo").value.trim(),
     adres: document.getElementById("inputAdres").value.trim(),
-    odeme_periyodu_gun: parseInt(document.getElementById("inputVadeGun").value, 10),
+    odeme_periyodu_gun: Utils.periyotSinirla(document.getElementById("inputVadeGun").value),
     varsayilan_yon: document.getElementById("inputVarsayilanYon").value,
     notlar: document.getElementById("inputNotlar").value.trim(),
   };

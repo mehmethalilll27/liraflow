@@ -347,12 +347,9 @@ Ayarlar
 <textarea class="w-full px-md py-sm rounded-lg border border-outline focus:ring-2 focus:ring-primary focus:border-primary transition-all text-body-md" rows="3" id="inputAdres"></textarea>
 </div>
 <div class="space-y-base">
-<label class="font-label-md text-label-md text-on-surface-variant ml-1">Ödeme Periyodu</label>
-<select class="w-full px-md py-sm rounded-lg border border-outline focus:ring-2 focus:ring-primary focus:border-primary transition-all text-body-md" id="inputVadeGun">
-<option value="15">15 günde bir</option>
-<option value="30">30 günde bir</option>
-<option value="45">45 günde bir</option>
-</select>
+<label class="font-label-md text-label-md text-on-surface-variant ml-1">Ödeme Periyodu (gün)</label>
+<input type="number" min="1" max="365" step="1" class="w-full px-md py-sm rounded-lg border border-outline focus:ring-2 focus:ring-primary focus:border-primary transition-all text-body-md" id="inputVadeGun" value="30"/>
+<p class="text-xs text-on-surface-variant ml-1">Kaç günde bir ödeme/tahsilat beklenir (örn. 7, 15, 30)</p>
 </div>
 <div class="space-y-base">
 <label class="font-label-md text-label-md text-on-surface-variant ml-1">Varsayılan Yön</label>
@@ -372,11 +369,11 @@ Ayarlar
 <button type="button" class="px-lg border border-outline text-on-surface py-sm rounded-xl font-bold hover:bg-surface-container-high transition-all" id="drawerIptalBtn">İptal</button>
 </div>
 </div>
-<script src="/static/js/utils.js?v=7"></script>
+<script src="/static/js/utils.js?v=8"></script>
 <script src="/static/js/apiService.js"></script>
 <script src="/static/js/settingsService.js"></script>
 <script src="/static/js/authService.js"></script>
 <script src="/static/js/layout.js?v=3"></script>
 <script src="/static/js/firmService.js"></script>
-<script src="/static/js/firmalar.page.js?v=2"></script>
+<script src="/static/js/firmalar.page.js?v=3"></script>
 </body></html>

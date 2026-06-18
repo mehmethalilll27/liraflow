@@ -107,13 +107,18 @@ const Utils = {
     return `${gun} gün vadeli`;
   },
 
+  periyotSinirla(gun) {
+    const n = parseInt(gun, 10);
+    if (!Number.isFinite(n) || n < 1) return 30;
+    return Math.min(365, n);
+  },
+
   periyotEtiketi(gun) {
-    const normalize = gun === 10 ? 15 : gun;
-    return `${normalize} günde bir`;
+    return `${this.periyotSinirla(gun)} günde bir`;
   },
 
   periyotBadge(gun) {
-    const normalize = gun === 10 ? 15 : gun || 30;
+    const normalize = this.periyotSinirla(gun);
     const siniflar = {
       15: "bg-error-container/40 text-on-error-container border-error/20",
       30: "bg-tertiary-fixed-dim/20 text-on-tertiary-container border-on-tertiary-container/20",

@@ -161,8 +161,7 @@ function faturaSiraSkoru(f) {
   const oncelikSira = { yuksek: 0, orta: 1, dusuk: 2 };
   const kalan = f.kalan_gun;
   const kalanSira = kalan == null ? 999 : kalan;
-  const periyotMap = { 15: 0, 30: 1, 45: 2 };
-  const periyotSira = periyotMap[f.odeme_periyodu_gun || 30] ?? 1;
+  const periyotSira = Utils.periyotSinirla(f.odeme_periyodu_gun || 30);
   return [
     durumSira[f.durum] ?? 5,
     oncelikSira[f.oncelik || "orta"] ?? 1,
@@ -366,13 +365,13 @@ function firmaPeriyotGoster() {
   const ad = document.getElementById("yeni-firma-adi").value.trim();
   const firma = tumFirmalar.find((f) => f.firma_adi === ad);
   const info = document.getElementById("yeni-vade-info");
-  const periyotSelect = document.getElementById("yeni-odeme-periyodu");
+  const periyotInput = document.getElementById("yeni-odeme-periyodu");
   if (!firma) {
     if (info) info.textContent = "";
     return;
   }
-  const gun = firma.odeme_periyodu_gun || firma.odeme_vadesi_gun || 30;
-  if (periyotSelect) periyotSelect.value = String(gun === 10 ? 15 : gun);
+  const gun = Utils.periyotSinirla(firma.odeme_periyodu_gun || firma.odeme_vadesi_gun || 30);
+  if (periyotInput) periyotInput.value = String(gun);
   const yonSelect = document.getElementById("yeni-yon");
   if (yonSelect && firma.varsayilan_yon) {
     yonSelect.value = firma.varsayilan_yon;
@@ -450,7 +449,7 @@ async function yeniFaturaKaydet() {
   const tutar = parseFloat(String(tutarRaw).replace(",", "."));
   const vade_tarihi = document.getElementById("yeni-vade").value;
   const notlar = document.getElementById("yeni-notlar").value.trim();
-  const odeme_periyodu_gun = parseInt(document.getElementById("yeni-odeme-periyodu").value, 10);
+  const odeme_periyodu_gun = Utils.periyotSinirla(document.getElementById("yeni-odeme-periyodu").value);
   const yon = document.getElementById("yeni-yon").value;
 
   if (!firma_adi || !tutar || !vade_tarihi) {

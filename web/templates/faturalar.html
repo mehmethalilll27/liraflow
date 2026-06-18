@@ -387,13 +387,10 @@ Ayarlar
 </div>
 </div>
 <div>
-<label class="font-label-md text-label-md text-on-surface-variant">Ödeme Periyodu</label>
-<select class="w-full mt-1 px-md py-sm rounded-lg border border-outline-variant" id="yeni-odeme-periyodu">
-<option value="15">15 günde bir</option>
-<option value="30">30 günde bir</option>
-<option value="45">45 günde bir</option>
-</select>
-<p class="text-xs text-on-surface-variant mt-1" id="yeni-vade-info"></p>
+<label class="font-label-md text-label-md text-on-surface-variant">Ödeme Periyodu (gün)</label>
+<input type="number" min="1" max="365" step="1" class="w-full mt-1 px-md py-sm rounded-lg border border-outline-variant" id="yeni-odeme-periyodu" value="30"/>
+<p class="text-xs text-on-surface-variant mt-1">Kaç günde bir ödeme/tahsilat beklenir (örn. 7, 15, 30)</p>
+<p class="text-xs text-on-surface-variant" id="yeni-vade-info"></p>
 </div>
 <div>
 <label class="font-label-md text-label-md text-on-surface-variant">Notlar</label>
@@ -407,12 +404,12 @@ Ayarlar
 <button type="button" class="absolute top-4 right-4 text-on-surface-variant hidden" id="yeni-fatura-kapat">×</button>
 </div>
 </div>
-<script src="/static/js/utils.js?v=6"></script>
+<script src="/static/js/utils.js?v=8"></script>
 <script src="/static/js/apiService.js"></script>
 <script src="/static/js/settingsService.js"></script>
 <script src="/static/js/authService.js"></script>
 <script src="/static/js/layout.js?v=3"></script>
 <script src="/static/js/firmService.js"></script>
 <script src="/static/js/invoiceService.js"></script>
-<script src="/static/js/faturalar.page.js?v=8"></script>
+<script src="/static/js/faturalar.page.js?v=9"></script>
 </body></html>

@@ -12,23 +12,19 @@ class CashflowService:
     def _firma_adi_haritasi(self, firmalar: list[dict]) -> dict[int, str]:
         return {firma["firma_id"]: firma["firma_adi"] for firma in firmalar}
 
+    def _periyot_normalize(self, gun: int) -> int:
+        try:
+            gun = int(gun)
+        except (TypeError, ValueError):
+            return 30
+        return max(1, min(365, gun))
+
     def _firma_periyot_haritasi(self, firmalar: list[dict]) -> dict[int, int]:
         harita = {}
         for firma in firmalar:
             gun = firma.get("odeme_periyodu_gun", firma.get("odeme_vadesi_gun", 30))
-            if gun == 10:
-                gun = 15
-            if gun not in {15, 30, 45}:
-                gun = 30
-            harita[firma["firma_id"]] = int(gun)
+            harita[firma["firma_id"]] = self._periyot_normalize(gun)
         return harita
-
-    def _periyot_normalize(self, gun: int) -> int:
-        if gun == 10:
-            return 15
-        if gun in {15, 30, 45}:
-            return gun
-        return 30
 
     def get_ayarlar(self) -> dict:
         return self.store.get_ayarlar()
@@ -82,9 +78,9 @@ class CashflowService:
         kalan = self._kalan_gun_hesapla(fatura["vade_tarihi"], fatura["durum"])
         if kalan is not None and kalan <= 5:
             return "yuksek"
-        if periyot_gun == 15:
-            return "yuksek" if (kalan is not None and kalan <= 15) else "orta"
-        if periyot_gun == 30:
+        if periyot_gun <= 15:
+            return "yuksek" if (kalan is not None and kalan <= periyot_gun) else "orta"
+        if periyot_gun <= 30:
             if kalan is not None and kalan <= 10:
                 return "yuksek"
             return "orta"
@@ -107,7 +103,7 @@ class CashflowService:
             )
         kalan = fatura.get("kalan_gun")
         kalan_sira = 999 if kalan is None else kalan
-        periyot_sira = {15: 0, 30: 1, 45: 2}.get(fatura.get("odeme_periyodu_gun", 30), 1)
+        periyot_sira = self._periyot_normalize(fatura.get("odeme_periyodu_gun", 30))
         vade = fatura.get("vade_tarihi", "")
         vade_key = date.fromisoformat(vade).toordinal() if vade else 0
         return (
