@@ -61,18 +61,92 @@ function sayfayiDoldur(fatura) {
   }
 
   document.getElementById("modal-durum-select").value = fatura.durum;
-  document.getElementById("odeme-tutar").value = fatura.tutar;
-  document.getElementById("odeme-tarih").value = new Date().toISOString().slice(0, 10);
+  const odemeTarihEl = document.getElementById("modal-odeme-tarih");
+  if (odemeTarihEl) {
+    odemeTarihEl.value = fatura.odeme_tarihi || new Date().toISOString().slice(0, 10);
+  }
+
+  const yon = fatura.yon || "GIDER";
+  const odemeKaydetBtn = document.getElementById("odeme-kaydet-btn");
+  if (odemeKaydetBtn) {
+    odemeKaydetBtn.innerHTML = `
+      <span class="material-symbols-outlined">${yon === "GELIR" ? "south_west" : "payments"}</span>
+      ${yon === "GELIR" ? "Tahsilat Kaydet" : "Ödeme Kaydet"}`;
+  }
+}
+
+function parseTutar(ham) {
+  const metin = String(ham ?? "").trim().replace(/\s/g, "");
+  if (!metin) return NaN;
+  if (metin.includes(",")) {
+    return parseFloat(metin.replace(/\./g, "").replace(",", "."));
+  }
+  return parseFloat(metin);
+}
+
+function formatTutarInput(deger) {
+  const sayi = Number(deger);
+  if (!Number.isFinite(sayi)) return "0";
+  return String(Math.max(0, Math.round(sayi * 100) / 100));
+}
+
+function odemeTutarGuncelle(delta) {
+  const input = document.getElementById("odeme-tutar");
+  if (!input) return;
+  const mevcut = parseTutar(input.value);
+  const taban = Number.isFinite(mevcut) ? mevcut : 0;
+  input.value = formatTutarInput(taban + delta);
+}
+
+function odemeModalAc() {
+  if (!aktifFatura) return;
+  const yon = aktifFatura.yon || "GIDER";
+  const baslik = document.getElementById("odeme-modal-baslik");
+  if (baslik) {
+    baslik.textContent = yon === "GELIR" ? "Tahsilat Kaydet" : "Ödeme Kaydet";
+  }
+  const tutarInput = document.getElementById("odeme-tutar");
+  if (tutarInput) tutarInput.value = formatTutarInput(aktifFatura.tutar);
+  const tarihInput = document.getElementById("odeme-tarih");
+  if (tarihInput) tarihInput.value = new Date().toISOString().slice(0, 10);
+  const kanalInput = document.getElementById("odeme-kanal");
+  if (kanalInput) kanalInput.value = "";
+  const notInput = document.getElementById("odeme-notlar");
+  if (notInput) notInput.value = "";
+  modalAc("odemeModal");
+}
+
+const DETAY_MODALLAR = ["statusModal", "odemeModal"];
+
+function tumModallariKapat() {
+  DETAY_MODALLAR.forEach((id) => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.classList.add("hidden");
+    el.classList.remove("flex");
+  });
+  document.body.classList.remove("overflow-hidden");
 }
 
 function modalAc(id) {
-  document.getElementById(id).classList.remove("hidden");
-  document.getElementById(id).classList.add("flex");
+  tumModallariKapat();
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.classList.remove("hidden");
+  el.classList.add("flex");
+  document.body.classList.add("overflow-hidden");
 }
 
 function modalKapat(id) {
-  document.getElementById(id).classList.add("hidden");
-  document.getElementById(id).classList.remove("flex");
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.classList.add("hidden");
+  el.classList.remove("flex");
+  const acik = DETAY_MODALLAR.some((modalId) => {
+    const modal = document.getElementById(modalId);
+    return modal && !modal.classList.contains("hidden");
+  });
+  if (!acik) document.body.classList.remove("overflow-hidden");
 }
 
 async function durumKaydet() {
@@ -86,14 +160,15 @@ async function durumKaydet() {
 
 async function odemeKaydet() {
   if (!aktifFatura) return;
-  const tutarRaw = document.getElementById("odeme-tutar").value;
-  const tutar = parseFloat(String(tutarRaw).replace(",", "."));
-  const odeme_tarihi = document.getElementById("odeme-tarih").value;
-  const kanal = document.getElementById("odeme-kanal").value.trim();
-  const notlar = document.getElementById("odeme-notlar").value.trim();
+  const tutarInput = document.getElementById("odeme-tutar");
+  const tutar = parseTutar(tutarInput?.value);
+  const odeme_tarihi = document.getElementById("odeme-tarih")?.value;
+  const kanal = document.getElementById("odeme-kanal")?.value.trim() || "";
+  const notlar = document.getElementById("odeme-notlar")?.value.trim() || "";
   const kaydetBtn = document.getElementById("odeme-onay-btn");
-  if (!tutar || tutar <= 0) {
+  if (!Number.isFinite(tutar) || tutar <= 0) {
     alert("Geçerli bir tutar girin.");
+    tutarInput?.focus();
     return;
   }
   if (!odeme_tarihi) {
@@ -103,23 +178,29 @@ async function odemeKaydet() {
   try {
     if (kaydetBtn) {
       kaydetBtn.disabled = true;
-      kaydetBtn.classList.add("opacity-60");
+      kaydetBtn.textContent = "Kaydediliyor...";
     }
-    await InvoiceService.odemeKaydet(aktifFatura.fatura_no, {
+    const guncel = await InvoiceService.odemeKaydet(aktifFatura.fatura_no, {
       tutar,
       odeme_tarihi,
       kanal,
       notlar,
     });
     modalKapat("odemeModal");
-    sayfayiDoldur(await InvoiceService.getir(aktifFatura.fatura_no));
-    alert("Ödeme kaydı başarıyla işlendi.");
+    sayfayiDoldur(guncel);
+    const yon = guncel.yon || "GIDER";
+    const eylem = yon === "GELIR" ? "Tahsilat" : "Ödeme";
+    const mesaj =
+      guncel.durum === "ODENDI"
+        ? `${eylem} kaydedildi. Fatura ödendi olarak işaretlendi.`
+        : `${eylem} kaydedildi. Kalan: ${Utils.formatTRY(Math.max(0, guncel.tutar - tutar), guncel.para_birimi)}`;
+    alert(mesaj);
   } catch (hata) {
-    alert(`Ödeme kaydedilemedi: ${hata.message}`);
+    alert(`Kayıt başarısız: ${hata.message}`);
   } finally {
     if (kaydetBtn) {
       kaydetBtn.disabled = false;
-      kaydetBtn.classList.remove("opacity-60");
+      kaydetBtn.textContent = "Kaydet";
     }
   }
 }
@@ -168,7 +249,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       window.location.href = "/faturalar";
     });
     document.getElementById("durum-guncelle-btn").addEventListener("click", () => modalAc("statusModal"));
-    document.getElementById("odeme-kaydet-btn").addEventListener("click", () => modalAc("odemeModal"));
+    document.getElementById("odeme-kaydet-btn").addEventListener("click", odemeModalAc);
     document.getElementById("indir-btn").addEventListener("click", faturaIndir);
     document.getElementById("arsiv-btn").addEventListener("click", faturaArsivle);
     document.getElementById("sil-btn").addEventListener("click", faturaSil);
@@ -176,12 +257,30 @@ document.addEventListener("DOMContentLoaded", async () => {
     document.getElementById("modal-iptal-btn").addEventListener("click", () => modalKapat("statusModal"));
     document.getElementById("modal-kaydet-btn").addEventListener("click", durumKaydet);
     document.getElementById("odeme-iptal-btn").addEventListener("click", () => modalKapat("odemeModal"));
-    document.getElementById("odeme-onay-btn").addEventListener("click", odemeKaydet);
+    document.getElementById("odeme-onay-btn").addEventListener("click", (e) => {
+      e.preventDefault();
+      odemeKaydet();
+    });
+    document.getElementById("odeme-tutar-azalt")?.addEventListener("click", () => odemeTutarGuncelle(-1000));
+    document.getElementById("odeme-tutar-artir")?.addEventListener("click", () => odemeTutarGuncelle(1000));
+    document.getElementById("odeme-tutar-tam")?.addEventListener("click", () => {
+      if (aktifFatura) {
+        document.getElementById("odeme-tutar").value = formatTutarInput(aktifFatura.tutar);
+      }
+    });
 
-    ["statusModal", "odemeModal"].forEach((id) => {
-      document.getElementById(id).addEventListener("click", (e) => {
-        if (e.target.id === id) modalKapat(id);
+    DETAY_MODALLAR.forEach((id) => {
+      const modal = document.getElementById(id);
+      if (!modal) return;
+      modal.addEventListener("click", (e) => {
+        if (e.target === modal || e.target.hasAttribute("data-modal-backdrop")) {
+          modalKapat(id);
+        }
       });
+      const panel = modal.querySelector("[data-modal-panel]");
+      if (panel) {
+        panel.addEventListener("click", (e) => e.stopPropagation());
+      }
     });
   } catch (hata) {
     alert(`Fatura yüklenemedi: ${hata.message}`);

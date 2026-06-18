@@ -140,6 +140,22 @@ const Utils = {
     return `<span class="inline-flex items-center px-sm py-xs rounded-lg text-[10px] font-bold uppercase tracking-tight border ${bilgi.sinif}">${bilgi.metin}</span>`;
   },
 
+  listeSiraBadge(siraNo, durum, yon = "GIDER") {
+    if (!siraNo || siraNo <= 0) {
+      return `<span class="text-on-surface-variant text-xs">—</span>`;
+    }
+    if (durum === "ODENDI" || durum === "IPTAL") {
+      return `<span class="inline-flex items-center justify-center w-7 h-7 rounded-full text-xs font-semibold bg-surface-container text-on-surface-variant">${siraNo}</span>`;
+    }
+    const vurgulu = siraNo <= 3;
+    const sinif = vurgulu
+      ? yon === "GELIR"
+        ? "bg-secondary text-on-secondary"
+        : "bg-primary text-on-primary"
+      : "bg-surface-container-high text-on-surface-variant";
+    return `<span class="inline-flex items-center justify-center w-7 h-7 rounded-full text-xs font-bold ${sinif}">${siraNo}</span>`;
+  },
+
   odemeSiraBadge(siraNo, durum) {
     if (!siraNo || siraNo <= 0) {
       return `<span class="text-on-surface-variant text-xs">—</span>`;

@@ -119,7 +119,7 @@ function ozetKartlariniGuncelle(faturalar) {
     if (yonFiltre === "GIDER") parcalar.push("sadece gider");
     else if (yonFiltre === "GELIR") parcalar.push("sadece gelir");
     if (o.gecikenAdet) parcalar.push(`${o.gecikenAdet} gecikmiş`);
-    aciklama.textContent = `${parcalar.join(" · ")} — gecikenler önce, gider ve gelir ayrı sıralı`;
+    aciklama.textContent = `${parcalar.join(" · ")} — önce geciken/bekleyenler, sonra ödenenler`;
   }
 }
 
@@ -152,25 +152,46 @@ function faturaFiltreUygun(f, filtre) {
   return true;
 }
 
+function faturaSiraSkoru(f) {
+  const durumSira = { GECIKTI: 0, BEKLIYOR: 1, ODENDI: 2, IPTAL: 3 };
+  const vadeKey = f.vade_tarihi ? Date.parse(`${f.vade_tarihi}T00:00:00`) : 0;
+  if (f.durum === "ODENDI" || f.durum === "IPTAL") {
+    return [durumSira[f.durum] ?? 5, 0, 0, 0, 0, -vadeKey];
+  }
+  const oncelikSira = { yuksek: 0, orta: 1, dusuk: 2 };
+  const kalan = f.kalan_gun;
+  const kalanSira = kalan == null ? 999 : kalan;
+  const periyotMap = { 15: 0, 30: 1, 45: 2 };
+  const periyotSira = periyotMap[f.odeme_periyodu_gun || 30] ?? 1;
+  return [
+    durumSira[f.durum] ?? 5,
+    oncelikSira[f.oncelik || "orta"] ?? 1,
+    kalanSira,
+    periyotSira,
+    -(f.tutar || 0),
+    vadeKey,
+  ];
+}
+
+function skorKarsilastir(a, b) {
+  for (let i = 0; i < a.length; i += 1) {
+    if (a[i] !== b[i]) return a[i] - b[i];
+  }
+  return 0;
+}
+
+function faturalariSirala(faturalar) {
+  return [...faturalar].sort((a, b) => skorKarsilastir(faturaSiraSkoru(a), faturaSiraSkoru(b)));
+}
+
 function siraNumaralariniYenile(faturalar) {
-  let giderNo = 1;
-  let gelirNo = 1;
-  return faturalar.map((f) => {
+  let siraNo = 1;
+  return faturalariSirala(faturalar).map((f) => {
     const kopya = { ...f };
-    if (f.durum !== "BEKLIYOR" && f.durum !== "GECIKTI") {
-      kopya.odeme_sira_no = 0;
-      kopya.tahsilat_sira_no = 0;
-      return kopya;
-    }
-    if ((f.yon || "GIDER") === "GELIR") {
-      kopya.tahsilat_sira_no = gelirNo;
-      kopya.odeme_sira_no = 0;
-      gelirNo += 1;
-    } else {
-      kopya.odeme_sira_no = giderNo;
-      kopya.tahsilat_sira_no = 0;
-      giderNo += 1;
-    }
+    kopya.liste_sira_no = siraNo;
+    siraNo += 1;
+    kopya.odeme_sira_no = 0;
+    kopya.tahsilat_sira_no = 0;
     return kopya;
   });
 }
@@ -221,11 +242,7 @@ function faturaSatirCiz(f) {
   const tutarSinif = yon === "GELIR" ? "text-secondary" : "text-error";
   return `
     <tr class="hover:bg-surface-container-low transition-colors duration-150 group">
-      <td class="px-lg py-lg text-center">${
-        yon === "GELIR"
-          ? Utils.tahsilatSiraBadge(f.tahsilat_sira_no || 0, f.durum)
-          : Utils.odemeSiraBadge(f.odeme_sira_no || 0, f.durum)
-      }</td>
+      <td class="px-lg py-lg text-center">${Utils.listeSiraBadge(f.liste_sira_no || 0, f.durum, yon)}</td>
       <td class="px-lg py-lg font-mono-data text-body-md font-semibold text-primary">${f.fatura_no}</td>
       <td class="px-lg py-lg">
         <div class="flex items-center gap-sm flex-wrap">
@@ -390,10 +407,9 @@ function disaAktar() {
     alert("Dışa aktarılacak fatura yok.");
     return;
   }
-  const basliklar = ["Ödeme Sıra", "Tahsilat Sıra", "Fatura No", "Yön", "Firma", "Ödeme Periyodu", "Tutar", "Vade", "Durum", "Öncelik", "Kategori"];
+  const basliklar = ["Sıra", "Fatura No", "Yön", "Firma", "Ödeme Periyodu", "Tutar", "Vade", "Durum", "Öncelik", "Kategori"];
   const satirlar = kaynak.map((f) => [
-    f.odeme_sira_no || "",
-    f.tahsilat_sira_no || "",
+    f.liste_sira_no || "",
     f.fatura_no,
     f.yon || "GIDER",
     f.firma_adi,

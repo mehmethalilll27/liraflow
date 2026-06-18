@@ -90,22 +90,37 @@ class CashflowService:
             return "orta"
         return "dusuk"
 
-    def _odeme_sira_skoru(self, fatura: dict) -> tuple:
-        durum_sira = {"GECIKTI": 0, "BEKLIYOR": 1, "ODENDI": 8, "IPTAL": 9}
+    def _fatura_sira_skoru(self, fatura: dict) -> tuple:
+        durum_sira = {"GECIKTI": 0, "BEKLIYOR": 1, "ODENDI": 2, "IPTAL": 3}
         oncelik_sira = {"yuksek": 0, "orta": 1, "dusuk": 2}
+        durum = fatura["durum"]
+        if durum in {"ODENDI", "IPTAL"}:
+            vade = fatura.get("vade_tarihi", "")
+            vade_key = -date.fromisoformat(vade).toordinal() if vade else 0
+            return (
+                durum_sira.get(durum, 5),
+                0,
+                0,
+                0,
+                0,
+                vade_key,
+            )
         kalan = fatura.get("kalan_gun")
-        if kalan is None:
-            kalan_sira = 999
-        else:
-            kalan_sira = kalan
+        kalan_sira = 999 if kalan is None else kalan
         periyot_sira = {15: 0, 30: 1, 45: 2}.get(fatura.get("odeme_periyodu_gun", 30), 1)
+        vade = fatura.get("vade_tarihi", "")
+        vade_key = date.fromisoformat(vade).toordinal() if vade else 0
         return (
-            durum_sira.get(fatura["durum"], 5),
+            durum_sira.get(durum, 5),
             oncelik_sira.get(fatura.get("oncelik", "orta"), 1),
             kalan_sira,
             periyot_sira,
             fatura.get("tutar", 0) * -1,
+            vade_key,
         )
+
+    def _odeme_sira_skoru(self, fatura: dict) -> tuple:
+        return self._fatura_sira_skoru(fatura)
 
     def _fatura_zenginlestir(self, fatura: dict, firma_periyot_haritasi: dict[int, int]) -> dict:
         sonuc = dict(fatura)
@@ -120,49 +135,12 @@ class CashflowService:
         return self._faturalari_listeye_hazirla(faturalar)
 
     def _faturalari_listeye_hazirla(self, faturalar: list[dict]) -> list[dict]:
-        sonuc: list[dict] = []
-        eklenen: set[str] = set()
-        gider_no = 1
-        gelir_no = 1
-
-        bloklar = [
-            ("GIDER", "GECIKTI"),
-            ("GELIR", "GECIKTI"),
-            ("GIDER", "BEKLIYOR"),
-            ("GELIR", "BEKLIYOR"),
-        ]
-        for yon, durum in bloklar:
-            aday = [
-                x
-                for x in faturalar
-                if x.get("yon", "GIDER") == yon
-                and x["durum"] == durum
-                and x["fatura_no"] not in eklenen
-            ]
-            for fatura in sorted(aday, key=self._odeme_sira_skoru):
-                eklenen.add(fatura["fatura_no"])
-                if yon == "GIDER":
-                    fatura["odeme_sira_no"] = gider_no
-                    fatura["tahsilat_sira_no"] = 0
-                    gider_no += 1
-                else:
-                    fatura["tahsilat_sira_no"] = gelir_no
-                    fatura["odeme_sira_no"] = 0
-                    gelir_no += 1
-                sonuc.append(fatura)
-
-        kapali = [
-            x
-            for x in faturalar
-            if x["durum"] in {"ODENDI", "IPTAL"} and x["fatura_no"] not in eklenen
-        ]
-        kapali.sort(key=lambda x: x.get("vade_tarihi", ""), reverse=True)
-        for fatura in kapali:
+        sirali = sorted(faturalar, key=self._fatura_sira_skoru)
+        for sira_no, fatura in enumerate(sirali, start=1):
+            fatura["liste_sira_no"] = sira_no
             fatura["odeme_sira_no"] = 0
             fatura["tahsilat_sira_no"] = 0
-            sonuc.append(fatura)
-
-        return sonuc
+        return sirali
 
     def sync_all(self) -> tuple[list[dict], list[dict]]:
         firmalar = self.store.get_firmalar()
@@ -697,10 +675,12 @@ class CashflowService:
         odeme_tarihi = odeme_tarihi or date.today().isoformat()
         kanal_metin = f" ({kanal})" if kanal else ""
         not_metin = f" — {notlar}" if notlar else ""
+        yon = hedef.get("yon", "GIDER")
+        eylem = "Tahsilat" if yon == "GELIR" else "Ödeme"
         self._gecmis_ekle(
             hedef,
-            "Ödeme Kaydı",
-            f"{tutar:.2f} TRY tahsil edildi{kanal_metin}{not_metin}",
+            f"{eylem} Kaydı",
+            f"{tutar:.2f} TRY {eylem.lower()} kaydedildi{kanal_metin}{not_metin}",
         )
         hedef["odeme_tarihi"] = odeme_tarihi
         hedef["guncelleme_tarihi"] = date.today().isoformat()

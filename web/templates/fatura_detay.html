@@ -283,7 +283,7 @@ Ayarlar
                             Durumu Güncelle
                         </button>
 <div class="grid grid-cols-2 gap-sm">
-<button type="button" id="arsiv-btn" class="bg-surface-container border border-outline-variant text-primary font-label-md py-sm rounded-lg flex items-center justify-center gap-sm hover:bg-surface-container-high transition-all">
+<button type="button" id="arsiv-btn" title="Listeden gizler; veri silinmez" class="bg-surface-container border border-outline-variant text-primary font-label-md py-sm rounded-lg flex items-center justify-center gap-sm hover:bg-surface-container-high transition-all">
 <span class="material-symbols-outlined text-sm">archive</span>
                                 Arşivle
                             </button>
@@ -292,6 +292,7 @@ Ayarlar
                                 İndir
                             </button>
 </div>
+<p class="text-xs text-on-surface-variant text-center">Arşivle: faturayı listeden ve ödeme sırasından çıkarır; silmez.</p>
 <button type="button" id="sil-btn" class="w-full text-error font-label-md py-sm rounded-lg flex items-center justify-center gap-sm hover:bg-error-container/20 transition-all mt-lg">
 <span class="material-symbols-outlined text-sm">delete</span>
                             Faturayı Sil
@@ -309,7 +310,7 @@ Ayarlar
 <!-- MODAL (Confirm Dialog Mockup) -->
 <div class="fixed inset-0 z-[100] hidden items-center justify-center p-xl" id="statusModal">
 <div class="absolute inset-0 bg-primary/40 backdrop-blur-sm" data-modal-backdrop></div>
-<div class="relative bg-surface rounded-xl shadow-2xl w-full max-w-md overflow-hidden transform transition-all">
+<div class="relative bg-surface rounded-xl shadow-2xl w-full max-w-md overflow-hidden transform transition-all" data-modal-panel>
 <div class="p-lg">
 <div class="flex items-center gap-md mb-lg">
 <div class="w-12 h-12 bg-secondary-container text-on-secondary-container rounded-full flex items-center justify-center">
@@ -334,14 +335,21 @@ Ayarlar
 </div>
 </div>
 </div>
+</div>
 <!-- Ödeme Kayıt Modal -->
-<div class="fixed inset-0 z-[100] hidden items-center justify-center p-xl bg-primary/30" id="odemeModal">
-<div class="bg-surface rounded-xl shadow-2xl w-full max-w-md p-lg border border-outline-variant">
-<h3 class="font-headline-md text-primary mb-lg">Ödeme Kaydet</h3>
+<div class="fixed inset-0 z-[100] hidden items-center justify-center p-xl" id="odemeModal">
+<div class="absolute inset-0 bg-primary/40 backdrop-blur-sm" data-modal-backdrop></div>
+<div class="relative bg-surface rounded-xl shadow-2xl w-full max-w-md p-lg border border-outline-variant" data-modal-panel>
+<h3 class="font-headline-md text-primary mb-lg" id="odeme-modal-baslik">Ödeme Kaydet</h3>
 <div class="space-y-md">
 <div>
 <label class="font-label-md text-on-surface-variant">Tutar (TRY)</label>
-<input type="number" id="odeme-tutar" class="w-full mt-1 px-md py-sm rounded-lg border border-outline-variant" step="0.01"/>
+<div class="flex items-stretch gap-sm mt-1">
+<button type="button" id="odeme-tutar-azalt" class="shrink-0 min-w-[56px] px-sm py-md rounded-lg border border-outline-variant bg-surface-container-low text-on-surface font-bold text-sm hover:bg-surface-container-high transition-all">−1K</button>
+<input type="text" inputmode="decimal" id="odeme-tutar" class="flex-1 min-w-0 px-md py-md rounded-lg border border-outline-variant text-center font-mono-data text-body-md font-bold"/>
+<button type="button" id="odeme-tutar-artir" class="shrink-0 min-w-[56px] px-sm py-md rounded-lg border border-outline-variant bg-surface-container-low text-on-surface font-bold text-sm hover:bg-surface-container-high transition-all">+1K</button>
+</div>
+<button type="button" id="odeme-tutar-tam" class="mt-sm text-xs font-semibold text-primary hover:underline">Tam tutarı yaz</button>
 </div>
 <div>
 <label class="font-label-md text-on-surface-variant">Ödeme Tarihi</label>
@@ -362,11 +370,11 @@ Ayarlar
 </div>
 </div>
 </div>
-<script src="/static/js/utils.js"></script>
+<script src="/static/js/utils.js?v=6"></script>
 <script src="/static/js/apiService.js"></script>
 <script src="/static/js/settingsService.js"></script>
 <script src="/static/js/authService.js"></script>
-<script src="/static/js/layout.js"></script>
+<script src="/static/js/layout.js?v=3"></script>
 <script src="/static/js/invoiceService.js"></script>
-<script src="/static/js/fatura_detay.page.js"></script>
+<script src="/static/js/fatura_detay.page.js?v=3"></script>
 </body></html>
