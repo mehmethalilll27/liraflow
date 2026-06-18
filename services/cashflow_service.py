@@ -142,6 +142,88 @@ class CashflowService:
             fatura["tahsilat_sira_no"] = 0
         return sirali
 
+    def _firma_finans_ozet(self, bagli_faturalar: list[dict]) -> dict:
+        def acik_mi(f: dict) -> bool:
+            return f["durum"] in {"BEKLIYOR", "GECIKTI"} and not f.get("arsiv_mi", False)
+
+        def yon(f: dict) -> str:
+            return f.get("yon", "GIDER")
+
+        acik_gider = round(
+            sum(x["tutar"] for x in bagli_faturalar if acik_mi(x) and yon(x) == "GIDER"),
+            2,
+        )
+        acik_gelir = round(
+            sum(x["tutar"] for x in bagli_faturalar if acik_mi(x) and yon(x) == "GELIR"),
+            2,
+        )
+        geciken_gider = round(
+            sum(
+                x["tutar"]
+                for x in bagli_faturalar
+                if x["durum"] == "GECIKTI" and not x.get("arsiv_mi", False) and yon(x) == "GIDER"
+            ),
+            2,
+        )
+        geciken_gelir = round(
+            sum(
+                x["tutar"]
+                for x in bagli_faturalar
+                if x["durum"] == "GECIKTI" and not x.get("arsiv_mi", False) and yon(x) == "GELIR"
+            ),
+            2,
+        )
+        odenen_gider = round(
+            sum(x["tutar"] for x in bagli_faturalar if x["durum"] == "ODENDI" and yon(x) == "GIDER"),
+            2,
+        )
+        tahsil_gelir = round(
+            sum(x["tutar"] for x in bagli_faturalar if x["durum"] == "ODENDI" and yon(x) == "GELIR"),
+            2,
+        )
+
+        yonlar = {
+            yon(x)
+            for x in bagli_faturalar
+            if x["durum"] != "IPTAL" and not x.get("arsiv_mi", False)
+        }
+        if not yonlar:
+            firma_tipi = "BOS"
+        elif yonlar == {"GIDER"}:
+            firma_tipi = "TEDARIKCI"
+        elif yonlar == {"GELIR"}:
+            firma_tipi = "MUSTERI"
+        else:
+            firma_tipi = "KARMA"
+
+        son = sorted(bagli_faturalar, key=lambda x: x.get("vade_tarihi", ""), reverse=True)[:5]
+        son_faturalar = [
+            {
+                "fatura_no": x["fatura_no"],
+                "tutar": x["tutar"],
+                "para_birimi": x.get("para_birimi", "TRY"),
+                "vade_tarihi": x["vade_tarihi"],
+                "durum": x["durum"],
+                "yon": yon(x),
+            }
+            for x in son
+        ]
+
+        return {
+            "acik_gider": acik_gider,
+            "acik_gelir": acik_gelir,
+            "geciken_gider": geciken_gider,
+            "geciken_gelir": geciken_gelir,
+            "odenen_gider": odenen_gider,
+            "tahsil_gelir": tahsil_gelir,
+            "net_pozisyon": round(acik_gelir - acik_gider, 2),
+            "firma_tipi": firma_tipi,
+            "son_faturalar": son_faturalar,
+            "toplam_borc": acik_gider,
+            "toplam_odenen": round(odenen_gider + tahsil_gelir, 2),
+            "toplam_geciken": round(geciken_gider + geciken_gelir, 2),
+        }
+
     def sync_all(self) -> tuple[list[dict], list[dict]]:
         firmalar = self.store.get_firmalar()
         faturalar = self.store.get_faturalar()
@@ -181,18 +263,14 @@ class CashflowService:
 
         for firma in firmalar:
             bagli_faturalar = firma_fatura_haritasi.get(firma["firma_id"], [])
-            toplam_borc = sum(
-                x["tutar"]
-                for x in bagli_faturalar
-                if x["durum"] in {"BEKLIYOR", "GECIKTI"} and not x.get("arsiv_mi", False)
-            )
-            toplam_odenen = sum(x["tutar"] for x in bagli_faturalar if x["durum"] == "ODENDI")
-            toplam_geciken = sum(x["tutar"] for x in bagli_faturalar if x["durum"] == "GECIKTI")
+            ozet = self._firma_finans_ozet(bagli_faturalar)
 
             firma.setdefault("yetkili_kisi", "")
             firma.setdefault("vergi_no", "")
             firma.setdefault("adres", "")
             firma.setdefault("aktif_mi", True)
+            firma.setdefault("varsayilan_yon", "GIDER")
+            firma.setdefault("notlar", "")
             firma.setdefault("odeme_periyodu_gun", varsayilan_periyot)
             if "odeme_vadesi_gun" in firma and "odeme_periyodu_gun" not in firma:
                 firma["odeme_periyodu_gun"] = self._periyot_normalize(int(firma.pop("odeme_vadesi_gun")))
@@ -200,9 +278,7 @@ class CashflowService:
             firma.pop("odeme_vadesi_gun", None)
             firma["fatura_no_listesi"] = [x["fatura_no"] for x in bagli_faturalar]
             firma.pop("fatura_id_listesi", None)
-            firma["toplam_borc"] = round(toplam_borc, 2)
-            firma["toplam_odenen"] = round(toplam_odenen, 2)
-            firma["toplam_geciken"] = round(toplam_geciken, 2)
+            firma.update(ozet)
 
         firma_periyot_haritasi = self._firma_periyot_haritasi(firmalar)
         for fatura in faturalar:
@@ -274,6 +350,8 @@ class CashflowService:
         adres: str = "",
         odeme_periyodu_gun: int | None = None,
         odeme_vadesi_gun: int | None = None,
+        varsayilan_yon: str = "GIDER",
+        notlar: str = "",
     ) -> dict:
         ayarlar = self.get_ayarlar()
         periyot = odeme_periyodu_gun if odeme_periyodu_gun is not None else odeme_vadesi_gun
@@ -284,6 +362,10 @@ class CashflowService:
         firmalar, _ = self.sync_all()
         if self.get_firma_by_name(firma_adi):
             raise ValueError("Bu isimde firma zaten var.")
+
+        yon = varsayilan_yon.upper()
+        if yon not in {"GIDER", "GELIR"}:
+            yon = "GIDER"
 
         yeni_id = max((x["firma_id"] for x in firmalar), default=0) + 1
         firma = Firma(
@@ -296,6 +378,8 @@ class CashflowService:
             adres=adres.strip(),
             aktif_mi=True,
             odeme_periyodu_gun=periyot,
+            varsayilan_yon=yon,
+            notlar=notlar.strip(),
             fatura_no_listesi=[],
         )
         firmalar.append(firma.to_dict())
@@ -328,6 +412,11 @@ class CashflowService:
             alanlar.pop("odeme_vadesi_gun", None)
         if "aktif_mi" in guncellemeler:
             alanlar["aktif_mi"] = bool(guncellemeler["aktif_mi"])
+        if "varsayilan_yon" in guncellemeler:
+            yon = str(guncellemeler["varsayilan_yon"]).upper()
+            alanlar["varsayilan_yon"] = yon if yon in {"GIDER", "GELIR"} else "GIDER"
+        if "notlar" in guncellemeler:
+            alanlar["notlar"] = str(guncellemeler["notlar"]).strip()
 
         for firma in firmalar:
             if firma["firma_id"] == hedef["firma_id"]:
@@ -585,7 +674,7 @@ class CashflowService:
         durum = durum.upper()
         if durum not in {"BEKLIYOR", "GECIKTI", "ODENDI", "IPTAL"}:
             raise ValueError("Gecersiz durum.")
-        yon = yon.upper()
+        yon = (yon or firma.get("varsayilan_yon", "GIDER")).upper()
         if yon not in {"GIDER", "GELIR"}:
             raise ValueError("Gecersiz yon.")
 

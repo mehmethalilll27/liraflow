@@ -373,8 +373,12 @@ function firmaPeriyotGoster() {
   }
   const gun = firma.odeme_periyodu_gun || firma.odeme_vadesi_gun || 30;
   if (periyotSelect) periyotSelect.value = String(gun === 10 ? 15 : gun);
+  const yonSelect = document.getElementById("yeni-yon");
+  if (yonSelect && firma.varsayilan_yon) {
+    yonSelect.value = firma.varsayilan_yon;
+  }
   if (info) {
-    const yon = document.getElementById("yeni-yon")?.value || "GIDER";
+    const yon = yonSelect?.value || firma.varsayilan_yon || "GIDER";
     const eylem = yon === "GELIR" ? "tahsilat" : "ödeme";
     info.textContent = `Bu firmadan ${Utils.periyotEtiketi(gun)} ${eylem} beklenir`;
   }
@@ -519,9 +523,13 @@ document.addEventListener("DOMContentLoaded", async () => {
     });
 
     if (new URLSearchParams(window.location.search).get("yeni") === "1") {
-      const yonParam = new URLSearchParams(window.location.search).get("yon");
+      const params = new URLSearchParams(window.location.search);
+      const yonParam = params.get("yon");
+      const firmaParam = params.get("firma") || params.get("firma_adi");
       if (yonParam) document.getElementById("yeni-yon").value = yonParam.toUpperCase();
+      if (firmaParam) document.getElementById("yeni-firma-adi").value = firmaParam;
       yeniFaturaModalAc();
+      if (firmaParam) firmaPeriyotGoster();
     }
 
     document.getElementById("fatura-tablo-body").addEventListener("click", async (e) => {

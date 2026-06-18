@@ -140,6 +140,39 @@ const Utils = {
     return `<span class="inline-flex items-center px-sm py-xs rounded-lg text-[10px] font-bold uppercase tracking-tight border ${bilgi.sinif}">${bilgi.metin}</span>`;
   },
 
+  firmaTipiEtiketi(tip) {
+    const harita = {
+      TEDARIKCI: {
+        metin: "Tedarikçi",
+        sinif: "bg-error-container/30 text-on-error-container border-error/20",
+      },
+      MUSTERI: {
+        metin: "Müşteri",
+        sinif: "bg-secondary-container/40 text-on-secondary-container border-secondary/20",
+      },
+      KARMA: {
+        metin: "Karma",
+        sinif: "bg-primary-container/30 text-on-primary-container border-primary/20",
+      },
+      BOS: {
+        metin: "Yeni",
+        sinif: "bg-outline-variant/20 text-on-surface-variant border-outline-variant",
+      },
+    };
+    const bilgi = harita[tip] || harita.BOS;
+    return `<span class="inline-flex items-center px-sm py-xs rounded-lg text-[10px] font-bold uppercase tracking-tight border ${bilgi.sinif}">${bilgi.metin}</span>`;
+  },
+
+  netPozisyonGoster(net) {
+    if (net > 0) {
+      return { metin: `+${this.formatTRY(net)}`, sinif: "text-secondary font-bold" };
+    }
+    if (net < 0) {
+      return { metin: `−${this.formatTRY(Math.abs(net))}`, sinif: "text-error font-bold" };
+    }
+    return { metin: this.formatTRY(0), sinif: "text-on-surface-variant" };
+  },
+
   listeSiraBadge(siraNo, durum, yon = "GIDER") {
     if (!siraNo || siraNo <= 0) {
       return `<span class="text-on-surface-variant text-xs">—</span>`;

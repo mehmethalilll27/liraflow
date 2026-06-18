@@ -10,6 +10,8 @@ class Firma:
         adres: str = "",
         aktif_mi: bool = True,
         odeme_periyodu_gun: int = 30,
+        varsayilan_yon: str = "GIDER",
+        notlar: str = "",
         fatura_no_listesi: list[str] | None = None,
         toplam_borc: float = 0.0,
         toplam_odenen: float = 0.0,
@@ -24,6 +26,8 @@ class Firma:
         self.adres = adres
         self.aktif_mi = aktif_mi
         self.odeme_periyodu_gun = odeme_periyodu_gun
+        self.varsayilan_yon = varsayilan_yon if varsayilan_yon in {"GIDER", "GELIR"} else "GIDER"
+        self.notlar = notlar
         self.fatura_no_listesi = fatura_no_listesi or []
         self.toplam_borc = toplam_borc
         self.toplam_odenen = toplam_odenen
@@ -40,6 +44,8 @@ class Firma:
             "adres": self.adres,
             "aktif_mi": self.aktif_mi,
             "odeme_periyodu_gun": self.odeme_periyodu_gun,
+            "varsayilan_yon": self.varsayilan_yon,
+            "notlar": self.notlar,
             "fatura_no_listesi": self.fatura_no_listesi,
             "toplam_borc": self.toplam_borc,
             "toplam_odenen": self.toplam_odenen,
@@ -58,6 +64,8 @@ class Firma:
             adres=veri.get("adres", ""),
             aktif_mi=veri.get("aktif_mi", True),
             odeme_periyodu_gun=int(veri.get("odeme_periyodu_gun", veri.get("odeme_vadesi_gun", 30))),
+            varsayilan_yon=veri.get("varsayilan_yon", "GIDER"),
+            notlar=veri.get("notlar", ""),
             fatura_no_listesi=veri.get("fatura_no_listesi", []),
             toplam_borc=veri.get("toplam_borc", 0.0),
             toplam_odenen=veri.get("toplam_odenen", 0.0),

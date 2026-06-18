@@ -25,6 +25,8 @@ class FirmaCreatePayload(BaseModel):
     adres: str = ""
     odeme_periyodu_gun: int | None = None
     odeme_vadesi_gun: int | None = None
+    varsayilan_yon: str = "GIDER"
+    notlar: str = ""
 
 
 class FirmaUpdatePayload(BaseModel):
@@ -37,6 +39,8 @@ class FirmaUpdatePayload(BaseModel):
     odeme_periyodu_gun: int | None = None
     odeme_vadesi_gun: int | None = None
     aktif_mi: bool | None = None
+    varsayilan_yon: str | None = None
+    notlar: str | None = None
 
 
 class FaturaDurumPayload(BaseModel):
@@ -163,6 +167,8 @@ def firma_ekle(payload: FirmaCreatePayload) -> dict:
             adres=payload.adres,
             odeme_periyodu_gun=payload.odeme_periyodu_gun,
             odeme_vadesi_gun=payload.odeme_vadesi_gun,
+            varsayilan_yon=payload.varsayilan_yon,
+            notlar=payload.notlar,
         )
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc

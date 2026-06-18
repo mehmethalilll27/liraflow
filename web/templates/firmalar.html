@@ -197,12 +197,65 @@ Ayarlar
 <div class="flex justify-between items-end mb-xl">
 <div>
 <h2 class="font-headline-lg text-headline-lg text-on-surface mb-xs">Firma Yönetimi</h2>
-<p class="text-on-surface-variant text-body-lg">Aktif olarak iş birliği yaptığınız firmaların listesi ve finansal özetleri.</p>
+<p class="text-on-surface-variant text-body-lg">Firmalarınızın gelir/gider pozisyonu, açık faturalar ve tahsilat özeti.</p>
 </div>
 <button type="button" id="yeni-firma-btn" class="bg-secondary text-on-secondary px-lg py-sm rounded-xl font-bold flex items-center gap-sm shadow-md hover:opacity-90 transition-opacity">
 <span class="material-symbols-outlined">add</span>
                     Yeni Firma Ekle
                 </button>
+</div>
+<!-- Özet Kartlar -->
+<div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-lg mb-xl" id="firma-ozet-kartlari">
+<div class="bg-surface-container-lowest rounded-xl border border-outline-variant p-lg shadow-sm">
+<p class="font-label-md text-label-md text-on-surface-variant uppercase tracking-wide">Açık Gider</p>
+<p class="font-headline-md text-headline-md text-error font-bold mt-sm" id="ozet-acik-gider">-</p>
+<p class="text-xs text-on-surface-variant mt-xs" id="ozet-acik-gider-alt">Ödenecek faturalar</p>
+</div>
+<div class="bg-surface-container-lowest rounded-xl border border-outline-variant p-lg shadow-sm">
+<p class="font-label-md text-label-md text-on-surface-variant uppercase tracking-wide">Açık Gelir</p>
+<p class="font-headline-md text-headline-md text-secondary font-bold mt-sm" id="ozet-acik-gelir">-</p>
+<p class="text-xs text-on-surface-variant mt-xs" id="ozet-acik-gelir-alt">Tahsil edilecek faturalar</p>
+</div>
+<div class="bg-surface-container-lowest rounded-xl border border-outline-variant p-lg shadow-sm">
+<p class="font-label-md text-label-md text-on-surface-variant uppercase tracking-wide">Net Pozisyon</p>
+<p class="font-headline-md text-headline-md font-bold mt-sm" id="ozet-net-pozisyon">-</p>
+<p class="text-xs text-on-surface-variant mt-xs" id="ozet-net-pozisyon-alt">Tahsilat − ödeme</p>
+</div>
+<div class="bg-surface-container-lowest rounded-xl border border-outline-variant p-lg shadow-sm">
+<p class="font-label-md text-label-md text-on-surface-variant uppercase tracking-wide">Geciken</p>
+<p class="font-headline-md text-headline-md text-error font-bold mt-sm" id="ozet-geciken-toplam">-</p>
+<p class="text-xs text-on-surface-variant mt-xs" id="ozet-geciken-alt">Gider + gelir gecikmeleri</p>
+</div>
+</div>
+<!-- Filtreler -->
+<div class="bg-surface-container-lowest p-md rounded-xl border border-outline-variant mb-lg flex flex-wrap items-end gap-md">
+<div class="flex flex-col gap-1 flex-1 min-w-[180px]">
+<label class="font-label-md text-on-surface-variant ml-1">Firma Tipi</label>
+<select class="bg-surface border border-outline-variant rounded-lg px-4 py-2 text-body-md" id="filtre-tip">
+<option value="">Tümü</option>
+<option value="TEDARIKCI">Tedarikçi</option>
+<option value="MUSTERI">Müşteri</option>
+<option value="KARMA">Karma</option>
+<option value="BOS">Faturasız</option>
+</select>
+</div>
+<div class="flex flex-col gap-1 min-w-[140px]">
+<label class="font-label-md text-on-surface-variant ml-1">Durum</label>
+<select class="bg-surface border border-outline-variant rounded-lg px-4 py-2 text-body-md" id="filtre-aktif">
+<option value="">Tümü</option>
+<option value="aktif">Aktif</option>
+<option value="pasif">Pasif</option>
+</select>
+</div>
+<div class="flex flex-col gap-1 min-w-[160px]">
+<label class="font-label-md text-on-surface-variant ml-1">Geciken</label>
+<select class="bg-surface border border-outline-variant rounded-lg px-4 py-2 text-body-md" id="filtre-geciken">
+<option value="">Tümü</option>
+<option value="evet">Gecikeni var</option>
+<option value="hayir">Gecikeni yok</option>
+</select>
+</div>
+<button type="button" class="bg-surface-container text-on-surface-variant px-lg py-2.5 rounded-lg font-semibold hover:bg-surface-container-high border border-outline-variant" id="filtre-temizle-btn">Temizle</button>
 </div>
 <!-- Data Table Container -->
 <div class="bg-surface-container-lowest rounded-xl border border-outline-variant shadow-[0px_1px_3px_rgba(0,0,0,0.05)] overflow-hidden">
@@ -210,13 +263,14 @@ Ayarlar
 <table class="w-full text-left border-collapse">
 <thead class="bg-surface-container-low sticky top-0">
 <tr>
-<th class="px-xl py-lg font-label-md text-label-md text-on-surface-variant uppercase tracking-wider">Firma Adı</th>
+<th class="px-xl py-lg font-label-md text-label-md text-on-surface-variant uppercase tracking-wider">Firma</th>
 <th class="px-xl py-lg font-label-md text-label-md text-on-surface-variant uppercase tracking-wider">İletişim</th>
-<th class="px-xl py-lg font-label-md text-label-md text-on-surface-variant uppercase tracking-wider">Toplam Borç</th>
-<th class="px-xl py-lg font-label-md text-label-md text-on-surface-variant uppercase tracking-wider">Toplam Ödenen</th>
-<th class="px-xl py-lg font-label-md text-label-md text-on-surface-variant uppercase tracking-wider">Geciken</th>
+<th class="px-xl py-lg font-label-md text-label-md text-on-surface-variant uppercase tracking-wider text-right">Ödeyeceğim</th>
+<th class="px-xl py-lg font-label-md text-label-md text-on-surface-variant uppercase tracking-wider text-right">Tahsil Edeceğim</th>
+<th class="px-xl py-lg font-label-md text-label-md text-on-surface-variant uppercase tracking-wider text-right">Net</th>
+<th class="px-xl py-lg font-label-md text-label-md text-on-surface-variant uppercase tracking-wider text-right">Geciken</th>
 <th class="px-xl py-lg font-label-md text-label-md text-on-surface-variant uppercase tracking-wider">Durum</th>
-<th class="px-xl py-lg font-label-md text-label-md text-on-surface-variant uppercase tracking-wider">İşlem</th>
+<th class="px-xl py-lg font-label-md text-label-md text-on-surface-variant uppercase tracking-wider text-center">İşlem</th>
 </tr>
 </thead>
 <tbody id="firma-tablo-body" class="divide-y divide-outline-variant"></tbody>
@@ -252,6 +306,20 @@ Ayarlar
 </button>
 </div>
 <div class="flex-1 overflow-y-auto p-xl space-y-lg">
+<div id="drawerFinansOzet" class="hidden rounded-xl border border-outline-variant bg-surface-container-low p-md space-y-sm">
+<p class="font-label-md text-label-md text-on-surface-variant uppercase">Finansal Özet</p>
+<div class="grid grid-cols-2 gap-sm text-sm">
+<div><span class="text-on-surface-variant">Açık gider</span><p class="font-mono-data text-error font-bold" id="drawerAcikGider">-</p></div>
+<div><span class="text-on-surface-variant">Açık gelir</span><p class="font-mono-data text-secondary font-bold" id="drawerAcikGelir">-</p></div>
+<div><span class="text-on-surface-variant">Net</span><p class="font-mono-data font-bold" id="drawerNet">-</p></div>
+<div><span class="text-on-surface-variant">Geciken</span><p class="font-mono-data text-error font-bold" id="drawerGeciken">-</p></div>
+</div>
+<div class="flex flex-wrap gap-sm pt-sm" id="drawerFaturaLinkleri"></div>
+</div>
+<div id="drawerSonFaturalar" class="hidden">
+<p class="font-label-md text-label-md text-on-surface-variant ml-1 mb-sm">Son Faturalar</p>
+<div id="drawerSonFaturalarListe" class="space-y-xs text-sm"></div>
+</div>
 <div class="space-y-base">
 <label class="font-label-md text-label-md text-on-surface-variant ml-1">Firma Ünvanı</label>
 <input class="w-full px-md py-sm rounded-lg border border-outline focus:ring-2 focus:ring-primary focus:border-primary transition-all text-body-md" id="inputFirmaAd" type="text"/>
@@ -286,17 +354,29 @@ Ayarlar
 <option value="45">45 günde bir</option>
 </select>
 </div>
+<div class="space-y-base">
+<label class="font-label-md text-label-md text-on-surface-variant ml-1">Varsayılan Yön</label>
+<select class="w-full px-md py-sm rounded-lg border border-outline focus:ring-2 focus:ring-primary focus:border-primary transition-all text-body-md" id="inputVarsayilanYon">
+<option value="GIDER">Gider (ödeme)</option>
+<option value="GELIR">Gelir (tahsilat)</option>
+</select>
+<p class="text-xs text-on-surface-variant ml-1">Yeni fatura eklerken varsayılan tip</p>
+</div>
+<div class="space-y-base">
+<label class="font-label-md text-label-md text-on-surface-variant ml-1">Firma Notları</label>
+<textarea class="w-full px-md py-sm rounded-lg border border-outline focus:ring-2 focus:ring-primary focus:border-primary transition-all text-body-md" rows="2" id="inputNotlar" placeholder="Ödeme alışkanlığı, özel anlaşma..."></textarea>
+</div>
 </div>
 <div class="p-xl border-t border-outline-variant flex gap-md bg-surface">
 <button type="button" class="flex-1 bg-primary text-on-primary py-sm rounded-xl font-bold hover:opacity-90 transition-opacity" id="drawerKaydetBtn">Kaydet</button>
 <button type="button" class="px-lg border border-outline text-on-surface py-sm rounded-xl font-bold hover:bg-surface-container-high transition-all" id="drawerIptalBtn">İptal</button>
 </div>
 </div>
-<script src="/static/js/utils.js"></script>
+<script src="/static/js/utils.js?v=7"></script>
 <script src="/static/js/apiService.js"></script>
 <script src="/static/js/settingsService.js"></script>
 <script src="/static/js/authService.js"></script>
-<script src="/static/js/layout.js"></script>
+<script src="/static/js/layout.js?v=3"></script>
 <script src="/static/js/firmService.js"></script>
-<script src="/static/js/firmalar.page.js"></script>
+<script src="/static/js/firmalar.page.js?v=2"></script>
 </body></html>
