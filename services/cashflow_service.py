@@ -55,16 +55,31 @@ class CashflowService:
         self.store.save_ayarlar(mevcut)
         return mevcut
 
-    def _gecmis_ekle(self, fatura: dict, baslik: str, aciklama: str) -> None:
+    def _gecmis_ekle(self, fatura: dict, baslik: str, aciklama: str, tarih: str | None = None) -> None:
         gecmis = fatura.setdefault("tahsilat_gecmisi", [])
         gecmis.insert(
             0,
             {
                 "baslik": baslik,
                 "aciklama": aciklama,
-                "tarih": date.today().isoformat(),
+                "tarih": tarih or date.today().isoformat(),
             },
         )
+
+    def _odenen_tutar(self, fatura: dict) -> float:
+        return round(float(fatura.get("odenen_tutar", 0) or 0), 2)
+
+    def _fatura_kalan_tutar(self, fatura: dict) -> float:
+        if fatura["durum"] in {"ODENDI", "IPTAL"}:
+            return 0.0
+        return round(max(0.0, float(fatura["tutar"]) - self._odenen_tutar(fatura)), 2)
+
+    def _kasa_guncelle(self, delta: float) -> float:
+        ayarlar = self.get_ayarlar()
+        yeni = round(float(ayarlar.get("mevcut_kasa_bakiyesi", 0)) + float(delta), 2)
+        ayarlar["mevcut_kasa_bakiyesi"] = yeni
+        self.store.save_ayarlar(ayarlar)
+        return yeni
 
     def _kalan_gun_hesapla(self, vade_tarihi: str, durum: str) -> int | None:
         if durum in {"ODENDI", "IPTAL"}:
@@ -122,6 +137,8 @@ class CashflowService:
         sonuc = dict(fatura)
         periyot = firma_periyot_haritasi.get(fatura["firma_id"], 30)
         sonuc["odeme_periyodu_gun"] = periyot
+        sonuc["odenen_tutar"] = self._odenen_tutar(fatura)
+        sonuc["kalan_tutar"] = self._fatura_kalan_tutar(fatura)
         sonuc["kalan_gun"] = self._kalan_gun_hesapla(fatura["vade_tarihi"], fatura["durum"])
         if fatura["durum"] in {"BEKLIYOR", "GECIKTI"}:
             sonuc["oncelik"] = self._hesapla_oncelik(fatura, periyot)
@@ -146,16 +163,16 @@ class CashflowService:
             return f.get("yon", "GIDER")
 
         acik_gider = round(
-            sum(x["tutar"] for x in bagli_faturalar if acik_mi(x) and yon(x) == "GIDER"),
+            sum(self._fatura_kalan_tutar(x) for x in bagli_faturalar if acik_mi(x) and yon(x) == "GIDER"),
             2,
         )
         acik_gelir = round(
-            sum(x["tutar"] for x in bagli_faturalar if acik_mi(x) and yon(x) == "GELIR"),
+            sum(self._fatura_kalan_tutar(x) for x in bagli_faturalar if acik_mi(x) and yon(x) == "GELIR"),
             2,
         )
         geciken_gider = round(
             sum(
-                x["tutar"]
+                self._fatura_kalan_tutar(x)
                 for x in bagli_faturalar
                 if x["durum"] == "GECIKTI" and not x.get("arsiv_mi", False) and yon(x) == "GIDER"
             ),
@@ -163,18 +180,18 @@ class CashflowService:
         )
         geciken_gelir = round(
             sum(
-                x["tutar"]
+                self._fatura_kalan_tutar(x)
                 for x in bagli_faturalar
                 if x["durum"] == "GECIKTI" and not x.get("arsiv_mi", False) and yon(x) == "GELIR"
             ),
             2,
         )
         odenen_gider = round(
-            sum(x["tutar"] for x in bagli_faturalar if x["durum"] == "ODENDI" and yon(x) == "GIDER"),
+            sum(self._odenen_tutar(x) for x in bagli_faturalar if x["durum"] == "ODENDI" and yon(x) == "GIDER"),
             2,
         )
         tahsil_gelir = round(
-            sum(x["tutar"] for x in bagli_faturalar if x["durum"] == "ODENDI" and yon(x) == "GELIR"),
+            sum(self._odenen_tutar(x) for x in bagli_faturalar if x["durum"] == "ODENDI" and yon(x) == "GELIR"),
             2,
         )
 
@@ -243,6 +260,9 @@ class CashflowService:
             fatura.setdefault("oncelik", "orta")
             fatura.setdefault("yon", "GIDER")
             fatura.setdefault("tahsilat_gecmisi", [])
+            fatura.setdefault("odenen_tutar", 0)
+            if fatura["durum"] == "ODENDI" and self._odenen_tutar(fatura) < float(fatura["tutar"]):
+                fatura["odenen_tutar"] = round(float(fatura["tutar"]), 2)
 
             if (
                 otomatik_gecikti
@@ -299,7 +319,7 @@ class CashflowService:
         firmalar, faturalar = self.sync_all()
         firma_periyot_haritasi = self._firma_periyot_haritasi(firmalar)
         sonuc = [
-            self._fatura_zenginlestir(Fatura.from_dict(x).to_dict(), firma_periyot_haritasi)
+            self._fatura_zenginlestir(dict(x), firma_periyot_haritasi)
             for x in faturalar
             if not x.get("arsiv_mi", False)
         ]
@@ -457,10 +477,10 @@ class CashflowService:
             "yaklasan_adedi": len(yaklasan),
             "geciken_firma_sayisi": geciken_firma_sayisi,
             "bildirim_gun_siniri": gun_siniri,
-            "toplam_odenecek": round(sum(x["tutar"] for x in bekleyen), 2),
-            "yaklasan_odenecek": round(sum(x["tutar"] for x in yaklasan), 2),
-            "toplam_geciken": round(sum(x["tutar"] for x in geciken), 2),
-            "toplam_odenen": round(sum(x["tutar"] for x in odenen), 2),
+            "toplam_odenecek": round(sum(x.get("kalan_tutar", x["tutar"]) for x in bekleyen), 2),
+            "yaklasan_odenecek": round(sum(x.get("kalan_tutar", x["tutar"]) for x in yaklasan), 2),
+            "toplam_geciken": round(sum(x.get("kalan_tutar", x["tutar"]) for x in geciken), 2),
+            "toplam_odenen": round(sum(x.get("odenen_tutar", x["tutar"]) for x in odenen), 2),
         }
 
     def _fatura_donemde_mi(self, fatura: dict, bugun: date, donem_son: date) -> bool:
@@ -502,19 +522,19 @@ class CashflowService:
                 donem_faturalar.append(fatura)
 
         return {
-            "bekleyen": round(sum(x["tutar"] for x in bekleyen), 2),
-            "geciken": round(sum(x["tutar"] for x in geciken), 2),
-            "bekleyen_toplam": round(sum(x["tutar"] for x in acik), 2),
-            "tamamlanan": round(sum(x["tutar"] for x in tamamlanan), 2),
-            "yaklasan": round(sum(x["tutar"] for x in yaklasan), 2),
+            "bekleyen": round(sum(self._fatura_kalan_tutar(x) for x in bekleyen), 2),
+            "geciken": round(sum(self._fatura_kalan_tutar(x) for x in geciken), 2),
+            "bekleyen_toplam": round(sum(self._fatura_kalan_tutar(x) for x in acik), 2),
+            "tamamlanan": round(sum(self._odenen_tutar(x) for x in tamamlanan), 2),
+            "yaklasan": round(sum(self._fatura_kalan_tutar(x) for x in yaklasan), 2),
             "yaklasan_adedi": len(yaklasan),
             "geciken_adedi": len(geciken),
             "bekleyen_adedi": len(bekleyen),
-            "donem_ici": round(sum(x["tutar"] for x in donem_ici), 2),
+            "donem_ici": round(sum(self._fatura_kalan_tutar(x) for x in donem_ici), 2),
             "donem_ici_adedi": len(donem_ici),
-            "donem_toplam": round(sum(x["tutar"] for x in donem_faturalar), 2),
+            "donem_toplam": round(sum(self._fatura_kalan_tutar(x) for x in donem_faturalar), 2),
             "donem_adedi": len(donem_faturalar),
-            "donem_geciken": round(sum(x["tutar"] for x in geciken), 2),
+            "donem_geciken": round(sum(self._fatura_kalan_tutar(x) for x in geciken), 2),
             "donem_geciken_adedi": len(geciken),
         }
 
@@ -543,7 +563,7 @@ class CashflowService:
                 {
                     "fatura_no": fatura["fatura_no"],
                     "firma_adi": fatura["firma_adi"],
-                    "tutar": fatura["tutar"],
+                    "tutar": self._fatura_kalan_tutar(fatura),
                     "para_birimi": fatura.get("para_birimi", "TRY"),
                     "vade_tarihi": fatura["vade_tarihi"],
                     "durum": fatura["durum"],
@@ -570,7 +590,7 @@ class CashflowService:
                 {
                     "fatura_no": x["fatura_no"],
                     "firma_adi": x["firma_adi"],
-                    "tutar": x["tutar"],
+                    "tutar": self._fatura_kalan_tutar(x),
                     "para_birimi": x.get("para_birimi", "TRY"),
                     "vade_tarihi": x["vade_tarihi"],
                     "durum": x["durum"],
@@ -621,7 +641,7 @@ class CashflowService:
         hedef = fatura_no.strip()
         for fatura in faturalar:
             if fatura["fatura_no"] == hedef:
-                return self._fatura_zenginlestir(Fatura.from_dict(fatura).to_dict(), firma_periyot_haritasi)
+                return self._fatura_zenginlestir(dict(fatura), firma_periyot_haritasi)
         return None
 
     def _vade_hesapla(self, olusturma_tarihi: str | None = None, gun: int = 30) -> str:
@@ -644,7 +664,22 @@ class CashflowService:
         self.sync_all()
         firma = self.get_firma_by_name(firma_adi)
         if not firma:
-            raise ValueError("Firma bulunamadi.")
+            yon_upper = (yon or "GIDER").upper()
+            if yon_upper not in {"GIDER", "GELIR"}:
+                yon_upper = "GIDER"
+            ayarlar = self.get_ayarlar()
+            periyot_yeni = (
+                self._periyot_normalize(int(odeme_periyodu_gun))
+                if odeme_periyodu_gun is not None
+                else int(ayarlar.get("varsayilan_odeme_periyodu", ayarlar.get("varsayilan_vade_gunu", 30)))
+            )
+            firma = self.add_firma(
+                firma_adi=firma_adi.strip(),
+                eposta="",
+                telefon="",
+                varsayilan_yon=yon_upper,
+                odeme_periyodu_gun=periyot_yeni,
+            )
 
         if odeme_periyodu_gun is not None:
             periyot = self._periyot_normalize(int(odeme_periyodu_gun))
@@ -691,6 +726,7 @@ class CashflowService:
             "kategori": kategori,
             "oncelik": self._hesapla_oncelik({"durum": durum, "vade_tarihi": vade_tarihi}, periyot),
             "yon": yon,
+            "odenen_tutar": 0,
             "tahsilat_gecmisi": [
                 {
                     "baslik": "Fatura Oluşturuldu",
@@ -723,11 +759,20 @@ class CashflowService:
         hedef["durum"] = durum
         hedef["guncelleme_tarihi"] = date.today().isoformat()
         if durum == "ODENDI":
-            hedef["odeme_tarihi"] = odeme_tarihi or date.today().isoformat()
+            odeme_tarihi = odeme_tarihi or date.today().isoformat()
+            hedef["odeme_tarihi"] = odeme_tarihi
+            if eski_durum != "ODENDI":
+                kalan = self._fatura_kalan_tutar(hedef)
+                if kalan > 0:
+                    yon = hedef.get("yon", "GIDER")
+                    delta = kalan if yon == "GELIR" else -kalan
+                    self._kasa_guncelle(delta)
+                    hedef["odenen_tutar"] = round(float(hedef["tutar"]), 2)
             self._gecmis_ekle(
                 hedef,
                 "Ödeme Onaylandı",
                 f"Durum {eski_durum} → ODENDI olarak güncellendi.",
+                odeme_tarihi,
             )
         else:
             self._gecmis_ekle(
@@ -757,26 +802,54 @@ class CashflowService:
         if not hedef:
             raise ValueError("Fatura bulunamadi.")
 
+        if hedef["durum"] in {"ODENDI", "IPTAL"}:
+            raise ValueError("Bu fatura zaten kapatilmis.")
+
+        tutar = round(float(tutar), 2)
+        if tutar <= 0:
+            raise ValueError("Gecerli bir tutar girin.")
+
+        kalan = self._fatura_kalan_tutar(hedef)
+        if tutar > kalan + 0.009:
+            raise ValueError(f"Odeme tutari kalan tutardan fazla olamaz (kalan: {kalan:.2f} TRY).")
+
         odeme_tarihi = odeme_tarihi or date.today().isoformat()
         kanal_metin = f" ({kanal})" if kanal else ""
         not_metin = f" — {notlar}" if notlar else ""
         yon = hedef.get("yon", "GIDER")
         eylem = "Tahsilat" if yon == "GELIR" else "Ödeme"
+        kasa_delta = tutar if yon == "GELIR" else -tutar
+        yeni_kasa = self._kasa_guncelle(kasa_delta)
+
+        hedef["odenen_tutar"] = round(self._odenen_tutar(hedef) + tutar, 2)
         self._gecmis_ekle(
             hedef,
             f"{eylem} Kaydı",
-            f"{tutar:.2f} TRY {eylem.lower()} kaydedildi{kanal_metin}{not_metin}",
+            f"{tutar:.2f} TRY {eylem.lower()} kaydedildi{kanal_metin}{not_metin}. Kasa: {yeni_kasa:.2f} TRY",
+            odeme_tarihi,
         )
         hedef["odeme_tarihi"] = odeme_tarihi
         hedef["guncelleme_tarihi"] = date.today().isoformat()
 
-        if float(tutar) >= float(hedef["tutar"]):
+        yeni_kalan = self._fatura_kalan_tutar(hedef)
+        if yeni_kalan <= 0.009:
             hedef["durum"] = "ODENDI"
-            self._gecmis_ekle(hedef, "Tam Ödeme", "Fatura tamamen ödendi olarak işaretlendi.")
+            hedef["odenen_tutar"] = round(float(hedef["tutar"]), 2)
+            self._gecmis_ekle(
+                hedef,
+                "Tam Ödeme",
+                "Fatura tamamen ödendi olarak işaretlendi.",
+                odeme_tarihi,
+            )
         else:
-            hedef["durum"] = "BEKLIYOR"
-            kalan = float(hedef["tutar"]) - float(tutar)
-            self._gecmis_ekle(hedef, "Kısmi Ödeme", f"Kalan tutar: {kalan:.2f} TRY")
+            if hedef["durum"] not in {"GECIKTI"}:
+                hedef["durum"] = "BEKLIYOR"
+            self._gecmis_ekle(
+                hedef,
+                "Kısmi Ödeme",
+                f"Kalan tutar: {yeni_kalan:.2f} TRY",
+                odeme_tarihi,
+            )
 
         self.store.save_faturalar(faturalar)
         self.sync_all()

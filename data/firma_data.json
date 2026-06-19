@@ -2,30 +2,29 @@
   "firmalar": [
     {
       "firma_id": 1,
-      "firma_adi": "Marmara Teknoloji",
-      "eposta": "info@marmarateknoloji.com",
-      "telefon": "5321000001",
-      "yetkili_kisi": "",
+      "firma_adi": "Test Tedarikci A.Ş.",
+      "eposta": "test@tedarikci.com",
+      "telefon": "5320000001",
+      "yetkili_kisi": "Test Yetkili",
       "vergi_no": "",
       "adres": "",
       "aktif_mi": true,
-      "toplam_borc": 18500,
-      "toplam_odenen": 0,
-      "toplam_geciken": 0,
-      "fatura_no_listesi": [
-        "FTR-2026-0005"
-      ],
-      "odeme_periyodu_gun": 15,
+      "odeme_periyodu_gun": 30,
       "varsayilan_yon": "GIDER",
-      "notlar": "",
-      "acik_gider": 18500,
-      "acik_gelir": 0,
+      "notlar": "Panel test — gider firması",
+      "fatura_no_listesi": [
+        "FTR-2026-0005",
+        "FTR-2026-0031",
+        "FTR-2026-0033"
+      ],
+      "acik_gider": 53500.0,
+      "acik_gelir": 50000.0,
       "geciken_gider": 0,
       "geciken_gelir": 0,
       "odenen_gider": 0,
       "tahsil_gelir": 0,
-      "net_pozisyon": -18500,
-      "firma_tipi": "TEDARIKCI",
+      "net_pozisyon": -3500.0,
+      "firma_tipi": "KARMA",
       "son_faturalar": [
         {
           "fatura_no": "FTR-2026-0005",
@@ -34,34 +33,50 @@
           "vade_tarihi": "2026-06-22",
           "durum": "BEKLIYOR",
           "yon": "GIDER"
+        },
+        {
+          "fatura_no": "FTR-2026-0031",
+          "tutar": 50000.0,
+          "para_birimi": "TRY",
+          "vade_tarihi": "2026-06-19",
+          "durum": "BEKLIYOR",
+          "yon": "GELIR"
+        },
+        {
+          "fatura_no": "FTR-2026-0033",
+          "tutar": 35000.0,
+          "para_birimi": "TRY",
+          "vade_tarihi": "2026-06-19",
+          "durum": "BEKLIYOR",
+          "yon": "GIDER"
         }
-      ]
+      ],
+      "toplam_borc": 53500.0,
+      "toplam_odenen": 0,
+      "toplam_geciken": 0
     },
     {
       "firma_id": 2,
-      "firma_adi": "Anadolu Lojistik",
-      "eposta": "iletisim@anadolulojistik.com",
-      "telefon": "5321000002",
-      "yetkili_kisi": "",
+      "firma_adi": "Test Musteri Ltd.",
+      "eposta": "test@musteri.com",
+      "telefon": "5320000002",
+      "yetkili_kisi": "Test Müşteri",
       "vergi_no": "",
       "adres": "",
       "aktif_mi": true,
-      "toplam_borc": 9200,
-      "toplam_odenen": 0,
-      "toplam_geciken": 9200,
+      "odeme_periyodu_gun": 30,
+      "varsayilan_yon": "GELIR",
+      "notlar": "Panel test — gelir firması",
       "fatura_no_listesi": [
         "FTR-2026-0001"
       ],
-      "odeme_periyodu_gun": 15,
-      "varsayilan_yon": "GIDER",
-      "notlar": "",
-      "acik_gider": 9200,
+      "acik_gider": 0,
       "acik_gelir": 0,
-      "geciken_gider": 9200,
+      "geciken_gider": 0,
       "geciken_gelir": 0,
-      "odenen_gider": 0,
+      "odenen_gider": 9200.0,
       "tahsil_gelir": 0,
-      "net_pozisyon": -9200,
+      "net_pozisyon": 0,
       "firma_tipi": "TEDARIKCI",
       "son_faturalar": [
         {
@@ -69,601 +84,13 @@
           "tutar": 9200,
           "para_birimi": "TRY",
           "vade_tarihi": "2026-06-10",
-          "durum": "GECIKTI",
-          "yon": "GIDER"
-        }
-      ]
-    },
-    {
-      "firma_id": 3,
-      "firma_adi": "Ege Dis Ticaret",
-      "eposta": "destek@egedisticaret.com",
-      "telefon": "5321000003",
-      "yetkili_kisi": "",
-      "vergi_no": "",
-      "adres": "",
-      "aktif_mi": true,
-      "toplam_borc": 12750,
-      "toplam_odenen": 0,
-      "toplam_geciken": 0,
-      "fatura_no_listesi": [
-        "FTR-2026-0009"
-      ],
-      "odeme_periyodu_gun": 30,
-      "varsayilan_yon": "GIDER",
-      "notlar": "",
-      "acik_gider": 12750,
-      "acik_gelir": 0,
-      "geciken_gider": 0,
-      "geciken_gelir": 0,
-      "odenen_gider": 0,
-      "tahsil_gelir": 0,
-      "net_pozisyon": -12750,
-      "firma_tipi": "TEDARIKCI",
-      "son_faturalar": [
-        {
-          "fatura_no": "FTR-2026-0009",
-          "tutar": 12750,
-          "para_birimi": "TRY",
-          "vade_tarihi": "2026-07-02",
-          "durum": "BEKLIYOR",
-          "yon": "GIDER"
-        }
-      ]
-    },
-    {
-      "firma_id": 4,
-      "firma_adi": "Karadeniz Gida",
-      "eposta": "muhasebe@karadenizgida.com",
-      "telefon": "5321000004",
-      "yetkili_kisi": "",
-      "vergi_no": "",
-      "adres": "",
-      "aktif_mi": true,
-      "toplam_borc": 0,
-      "toplam_odenen": 6400,
-      "toplam_geciken": 0,
-      "fatura_no_listesi": [
-        "FTR-2026-0014"
-      ],
-      "odeme_periyodu_gun": 45,
-      "varsayilan_yon": "GIDER",
-      "notlar": "",
-      "acik_gider": 0,
-      "acik_gelir": 0,
-      "geciken_gider": 0,
-      "geciken_gelir": 0,
-      "odenen_gider": 6400,
-      "tahsil_gelir": 0,
-      "net_pozisyon": 0,
-      "firma_tipi": "TEDARIKCI",
-      "son_faturalar": [
-        {
-          "fatura_no": "FTR-2026-0014",
-          "tutar": 6400,
-          "para_birimi": "TRY",
-          "vade_tarihi": "2026-06-06",
           "durum": "ODENDI",
           "yon": "GIDER"
         }
-      ]
-    },
-    {
-      "firma_id": 5,
-      "firma_adi": "Akdeniz Insaat",
-      "eposta": "ofis@akdenizinsaat.com",
-      "telefon": "5321000005",
-      "yetkili_kisi": "",
-      "vergi_no": "",
-      "adres": "",
-      "aktif_mi": true,
-      "toplam_borc": 22300,
-      "toplam_odenen": 0,
-      "toplam_geciken": 0,
-      "fatura_no_listesi": [
-        "FTR-2026-0008"
       ],
-      "odeme_periyodu_gun": 45,
-      "varsayilan_yon": "GIDER",
-      "notlar": "",
-      "acik_gider": 22300,
-      "acik_gelir": 0,
-      "geciken_gider": 0,
-      "geciken_gelir": 0,
-      "odenen_gider": 0,
-      "tahsil_gelir": 0,
-      "net_pozisyon": -22300,
-      "firma_tipi": "TEDARIKCI",
-      "son_faturalar": [
-        {
-          "fatura_no": "FTR-2026-0008",
-          "tutar": 22300,
-          "para_birimi": "TRY",
-          "vade_tarihi": "2026-06-30",
-          "durum": "BEKLIYOR",
-          "yon": "GIDER"
-        }
-      ]
-    },
-    {
-      "firma_id": 6,
-      "firma_adi": "Istanbul Yazilim",
-      "eposta": "hello@istanbulyazilim.com",
-      "telefon": "5321000006",
-      "yetkili_kisi": "",
-      "vergi_no": "",
-      "adres": "",
-      "aktif_mi": true,
-      "toplam_borc": 15800,
-      "toplam_odenen": 0,
-      "toplam_geciken": 15800,
-      "fatura_no_listesi": [
-        "FTR-2026-0003"
-      ],
-      "odeme_periyodu_gun": 15,
-      "varsayilan_yon": "GIDER",
-      "notlar": "",
-      "acik_gider": 15800,
-      "acik_gelir": 0,
-      "geciken_gider": 15800,
-      "geciken_gelir": 0,
-      "odenen_gider": 0,
-      "tahsil_gelir": 0,
-      "net_pozisyon": -15800,
-      "firma_tipi": "TEDARIKCI",
-      "son_faturalar": [
-        {
-          "fatura_no": "FTR-2026-0003",
-          "tutar": 15800,
-          "para_birimi": "TRY",
-          "vade_tarihi": "2026-06-16",
-          "durum": "GECIKTI",
-          "yon": "GIDER"
-        }
-      ]
-    },
-    {
-      "firma_id": 7,
-      "firma_adi": "Bursa Otomotiv",
-      "eposta": "satis@bursaotomotiv.com",
-      "telefon": "5321000007",
-      "yetkili_kisi": "",
-      "vergi_no": "",
-      "adres": "",
-      "aktif_mi": true,
-      "toplam_borc": 91300,
-      "toplam_odenen": 0,
-      "toplam_geciken": 0,
-      "fatura_no_listesi": [
-        "FTR-2026-0011",
-        "FTR-2026-0028"
-      ],
-      "odeme_periyodu_gun": 30,
-      "varsayilan_yon": "GIDER",
-      "notlar": "",
-      "acik_gider": 91300,
-      "acik_gelir": 0,
-      "geciken_gider": 0,
-      "geciken_gelir": 0,
-      "odenen_gider": 0,
-      "tahsil_gelir": 0,
-      "net_pozisyon": -91300,
-      "firma_tipi": "TEDARIKCI",
-      "son_faturalar": [
-        {
-          "fatura_no": "FTR-2026-0028",
-          "tutar": 52800,
-          "para_birimi": "TRY",
-          "vade_tarihi": "2026-08-29",
-          "durum": "BEKLIYOR",
-          "yon": "GIDER"
-        },
-        {
-          "fatura_no": "FTR-2026-0011",
-          "tutar": 38500,
-          "para_birimi": "TRY",
-          "vade_tarihi": "2026-07-08",
-          "durum": "BEKLIYOR",
-          "yon": "GIDER"
-        }
-      ]
-    },
-    {
-      "firma_id": 8,
-      "firma_adi": "Konya Tarim",
-      "eposta": "bilgi@konyatarim.com",
-      "telefon": "5321000008",
-      "yetkili_kisi": "",
-      "vergi_no": "",
-      "adres": "",
-      "aktif_mi": true,
-      "toplam_borc": 8700,
-      "toplam_odenen": 0,
-      "toplam_geciken": 0,
-      "fatura_no_listesi": [
-        "FTR-2026-0004"
-      ],
-      "odeme_periyodu_gun": 15,
-      "varsayilan_yon": "GIDER",
-      "notlar": "",
-      "acik_gider": 8700,
-      "acik_gelir": 0,
-      "geciken_gider": 0,
-      "geciken_gelir": 0,
-      "odenen_gider": 0,
-      "tahsil_gelir": 0,
-      "net_pozisyon": -8700,
-      "firma_tipi": "TEDARIKCI",
-      "son_faturalar": [
-        {
-          "fatura_no": "FTR-2026-0004",
-          "tutar": 8700,
-          "para_birimi": "TRY",
-          "vade_tarihi": "2026-06-20",
-          "durum": "BEKLIYOR",
-          "yon": "GIDER"
-        }
-      ]
-    },
-    {
-      "firma_id": 9,
-      "firma_adi": "Gaziantep Tekstil",
-      "eposta": "info@gazianteptekstil.com",
-      "telefon": "5321000009",
-      "yetkili_kisi": "",
-      "vergi_no": "",
-      "adres": "",
-      "aktif_mi": true,
       "toplam_borc": 0,
-      "toplam_odenen": 14100,
-      "toplam_geciken": 0,
-      "fatura_no_listesi": [
-        "FTR-2026-0015",
-        "FTR-2026-0031"
-      ],
-      "odeme_periyodu_gun": 30,
-      "varsayilan_yon": "GIDER",
-      "notlar": "",
-      "acik_gider": 0,
-      "acik_gelir": 40000.0,
-      "geciken_gider": 0,
-      "geciken_gelir": 0,
-      "odenen_gider": 14100,
-      "tahsil_gelir": 0,
-      "net_pozisyon": 40000.0,
-      "firma_tipi": "KARMA",
-      "son_faturalar": [
-        {
-          "fatura_no": "FTR-2026-0031",
-          "tutar": 40000.0,
-          "para_birimi": "TRY",
-          "vade_tarihi": "2026-06-27",
-          "durum": "BEKLIYOR",
-          "yon": "GELIR"
-        },
-        {
-          "fatura_no": "FTR-2026-0015",
-          "tutar": 14100,
-          "para_birimi": "TRY",
-          "vade_tarihi": "2026-05-29",
-          "durum": "ODENDI",
-          "yon": "GIDER"
-        }
-      ]
-    },
-    {
-      "firma_id": 10,
-      "firma_adi": "Izmir Kimya",
-      "eposta": "destek@izmirkimya.com",
-      "telefon": "5321000010",
-      "yetkili_kisi": "",
-      "vergi_no": "",
-      "adres": "",
-      "aktif_mi": true,
-      "toplam_borc": 64800,
-      "toplam_odenen": 0,
-      "toplam_geciken": 0,
-      "fatura_no_listesi": [
-        "FTR-2026-0010",
-        "FTR-2026-0027"
-      ],
-      "odeme_periyodu_gun": 45,
-      "varsayilan_yon": "GIDER",
-      "notlar": "",
-      "acik_gider": 64800,
-      "acik_gelir": 0,
-      "geciken_gider": 0,
-      "geciken_gelir": 0,
-      "odenen_gider": 0,
-      "tahsil_gelir": 0,
-      "net_pozisyon": -64800,
-      "firma_tipi": "TEDARIKCI",
-      "son_faturalar": [
-        {
-          "fatura_no": "FTR-2026-0027",
-          "tutar": 45200,
-          "para_birimi": "TRY",
-          "vade_tarihi": "2026-07-30",
-          "durum": "BEKLIYOR",
-          "yon": "GIDER"
-        },
-        {
-          "fatura_no": "FTR-2026-0010",
-          "tutar": 19600,
-          "para_birimi": "TRY",
-          "vade_tarihi": "2026-07-06",
-          "durum": "BEKLIYOR",
-          "yon": "GIDER"
-        }
-      ]
-    },
-    {
-      "firma_id": 11,
-      "firma_adi": "Sakarya Makina",
-      "eposta": "iletisim@sakaryamakina.com",
-      "telefon": "5321000011",
-      "yetkili_kisi": "",
-      "vergi_no": "",
-      "adres": "",
-      "aktif_mi": true,
-      "toplam_borc": 11200,
-      "toplam_odenen": 0,
-      "toplam_geciken": 11200,
-      "fatura_no_listesi": [
-        "FTR-2026-0002"
-      ],
-      "odeme_periyodu_gun": 15,
-      "varsayilan_yon": "GIDER",
-      "notlar": "",
-      "acik_gider": 11200,
-      "acik_gelir": 0,
-      "geciken_gider": 11200,
-      "geciken_gelir": 0,
-      "odenen_gider": 0,
-      "tahsil_gelir": 0,
-      "net_pozisyon": -11200,
-      "firma_tipi": "TEDARIKCI",
-      "son_faturalar": [
-        {
-          "fatura_no": "FTR-2026-0002",
-          "tutar": 11200,
-          "para_birimi": "TRY",
-          "vade_tarihi": "2026-06-13",
-          "durum": "GECIKTI",
-          "yon": "GIDER"
-        }
-      ]
-    },
-    {
-      "firma_id": 12,
-      "firma_adi": "Kayseri Mobilya",
-      "eposta": "ofis@kayserimobilya.com",
-      "telefon": "5321000012",
-      "yetkili_kisi": "",
-      "vergi_no": "",
-      "adres": "",
-      "aktif_mi": true,
-      "toplam_borc": 7600,
-      "toplam_odenen": 0,
-      "toplam_geciken": 0,
-      "fatura_no_listesi": [
-        "FTR-2026-0007"
-      ],
-      "odeme_periyodu_gun": 30,
-      "varsayilan_yon": "GIDER",
-      "notlar": "",
-      "acik_gider": 7600,
-      "acik_gelir": 0,
-      "geciken_gider": 0,
-      "geciken_gelir": 0,
-      "odenen_gider": 0,
-      "tahsil_gelir": 0,
-      "net_pozisyon": -7600,
-      "firma_tipi": "TEDARIKCI",
-      "son_faturalar": [
-        {
-          "fatura_no": "FTR-2026-0007",
-          "tutar": 7600,
-          "para_birimi": "TRY",
-          "vade_tarihi": "2026-06-25",
-          "durum": "BEKLIYOR",
-          "yon": "GIDER"
-        }
-      ]
-    },
-    {
-      "firma_id": 13,
-      "firma_adi": "Eskisehir Enerji",
-      "eposta": "enerji@eskisehirenerji.com",
-      "telefon": "5321000013",
-      "yetkili_kisi": "",
-      "vergi_no": "",
-      "adres": "",
-      "aktif_mi": true,
-      "toplam_borc": 29900,
-      "toplam_odenen": 0,
-      "toplam_geciken": 0,
-      "fatura_no_listesi": [
-        "FTR-2026-0013"
-      ],
-      "odeme_periyodu_gun": 30,
-      "varsayilan_yon": "GIDER",
-      "notlar": "",
-      "acik_gider": 29900,
-      "acik_gelir": 0,
-      "geciken_gider": 0,
-      "geciken_gelir": 0,
-      "odenen_gider": 0,
-      "tahsil_gelir": 0,
-      "net_pozisyon": -29900,
-      "firma_tipi": "TEDARIKCI",
-      "son_faturalar": [
-        {
-          "fatura_no": "FTR-2026-0013",
-          "tutar": 29900,
-          "para_birimi": "TRY",
-          "vade_tarihi": "2026-07-18",
-          "durum": "BEKLIYOR",
-          "yon": "GIDER"
-        }
-      ]
-    },
-    {
-      "firma_id": 14,
-      "firma_adi": "Adana Plastik",
-      "eposta": "bilgi@adanaplastik.com",
-      "telefon": "5321000014",
-      "yetkili_kisi": "",
-      "vergi_no": "",
-      "adres": "",
-      "aktif_mi": true,
-      "toplam_borc": 78500,
-      "toplam_odenen": 0,
-      "toplam_geciken": 0,
-      "fatura_no_listesi": [
-        "FTR-2026-0026"
-      ],
-      "odeme_periyodu_gun": 30,
-      "varsayilan_yon": "GIDER",
-      "notlar": "",
-      "acik_gider": 78500,
-      "acik_gelir": 0,
-      "geciken_gider": 0,
-      "geciken_gelir": 0,
-      "odenen_gider": 0,
-      "tahsil_gelir": 0,
-      "net_pozisyon": -78500,
-      "firma_tipi": "TEDARIKCI",
-      "son_faturalar": [
-        {
-          "fatura_no": "FTR-2026-0026",
-          "tutar": 78500,
-          "para_birimi": "TRY",
-          "vade_tarihi": "2026-06-21",
-          "durum": "BEKLIYOR",
-          "yon": "GIDER"
-        }
-      ]
-    },
-    {
-      "firma_id": 15,
-      "firma_adi": "Antalya Turizm",
-      "eposta": "rezervasyon@antalyaturizm.com",
-      "telefon": "5321000015",
-      "yetkili_kisi": "",
-      "vergi_no": "",
-      "adres": "",
-      "aktif_mi": true,
-      "toplam_borc": 17400,
-      "toplam_odenen": 0,
-      "toplam_geciken": 0,
-      "fatura_no_listesi": [
-        "FTR-2026-0006"
-      ],
-      "odeme_periyodu_gun": 30,
-      "varsayilan_yon": "GIDER",
-      "notlar": "",
-      "acik_gider": 17400,
-      "acik_gelir": 0,
-      "geciken_gider": 0,
-      "geciken_gelir": 0,
-      "odenen_gider": 0,
-      "tahsil_gelir": 0,
-      "net_pozisyon": -17400,
-      "firma_tipi": "TEDARIKCI",
-      "son_faturalar": [
-        {
-          "fatura_no": "FTR-2026-0006",
-          "tutar": 17400,
-          "para_birimi": "TRY",
-          "vade_tarihi": "2026-06-24",
-          "durum": "BEKLIYOR",
-          "yon": "GIDER"
-        }
-      ]
-    },
-    {
-      "firma_id": 16,
-      "firma_adi": "Trabzon Denizcilik",
-      "eposta": "operasyon@trabzondenizcilik.com",
-      "telefon": "5321000016",
-      "yetkili_kisi": "",
-      "vergi_no": "",
-      "adres": "",
-      "aktif_mi": true,
-      "toplam_borc": 33600,
-      "toplam_odenen": 0,
-      "toplam_geciken": 0,
-      "fatura_no_listesi": [
-        "FTR-2026-0012"
-      ],
-      "odeme_periyodu_gun": 30,
-      "varsayilan_yon": "GIDER",
-      "notlar": "",
-      "acik_gider": 33600,
-      "acik_gelir": 0,
-      "geciken_gider": 0,
-      "geciken_gelir": 0,
-      "odenen_gider": 0,
-      "tahsil_gelir": 0,
-      "net_pozisyon": -33600,
-      "firma_tipi": "TEDARIKCI",
-      "son_faturalar": [
-        {
-          "fatura_no": "FTR-2026-0012",
-          "tutar": 33600,
-          "para_birimi": "TRY",
-          "vade_tarihi": "2026-07-13",
-          "durum": "BEKLIYOR",
-          "yon": "GIDER"
-        }
-      ]
-    },
-    {
-      "firma_id": 17,
-      "firma_adi": "Rotate LAB",
-      "eposta": "info@rotatelab.com",
-      "telefon": "05524287288",
-      "yetkili_kisi": "",
-      "vergi_no": "",
-      "adres": "",
-      "aktif_mi": true,
-      "toplam_borc": 0,
-      "toplam_odenen": 12800,
-      "toplam_geciken": 0,
-      "fatura_no_listesi": [
-        "FTR-2026-0019",
-        "FTR-2026-0025"
-      ],
-      "odeme_periyodu_gun": 30,
-      "varsayilan_yon": "GIDER",
-      "notlar": "",
-      "acik_gider": 0,
-      "acik_gelir": 22000,
-      "geciken_gider": 0,
-      "geciken_gelir": 0,
-      "odenen_gider": 0,
-      "tahsil_gelir": 12800,
-      "net_pozisyon": 22000,
-      "firma_tipi": "MUSTERI",
-      "son_faturalar": [
-        {
-          "fatura_no": "FTR-2026-0019",
-          "tutar": 22000,
-          "para_birimi": "TRY",
-          "vade_tarihi": "2026-06-23",
-          "durum": "BEKLIYOR",
-          "yon": "GELIR"
-        },
-        {
-          "fatura_no": "FTR-2026-0025",
-          "tutar": 12800,
-          "para_birimi": "TRY",
-          "vade_tarihi": "2026-05-24",
-          "durum": "ODENDI",
-          "yon": "GELIR"
-        }
-      ]
+      "toplam_odenen": 9200.0,
+      "toplam_geciken": 0
     },
     {
       "firma_id": 18,
@@ -681,17 +108,17 @@
         "FTR-2026-0030"
       ],
       "toplam_borc": 0,
-      "toplam_odenen": 0,
-      "toplam_geciken": 42000,
+      "toplam_odenen": 42000.0,
+      "toplam_geciken": 0,
       "varsayilan_yon": "GIDER",
       "notlar": "",
       "acik_gider": 0,
-      "acik_gelir": 116500,
+      "acik_gelir": 74500.0,
       "geciken_gider": 0,
-      "geciken_gelir": 42000,
+      "geciken_gelir": 0,
       "odenen_gider": 0,
-      "tahsil_gelir": 0,
-      "net_pozisyon": 116500,
+      "tahsil_gelir": 42000.0,
+      "net_pozisyon": 74500.0,
       "firma_tipi": "MUSTERI",
       "son_faturalar": [
         {
@@ -715,7 +142,7 @@
           "tutar": 42000,
           "para_birimi": "TRY",
           "vade_tarihi": "2026-06-08",
-          "durum": "GECIKTI",
+          "durum": "ODENDI",
           "yon": "GELIR"
         }
       ]
@@ -736,16 +163,16 @@
       ],
       "toplam_borc": 0,
       "toplam_odenen": 0,
-      "toplam_geciken": 28500,
+      "toplam_geciken": 28500.0,
       "varsayilan_yon": "GIDER",
       "notlar": "",
       "acik_gider": 0,
-      "acik_gelir": 44300,
+      "acik_gelir": 44300.0,
       "geciken_gider": 0,
-      "geciken_gelir": 28500,
+      "geciken_gelir": 28500.0,
       "odenen_gider": 0,
       "tahsil_gelir": 0,
-      "net_pozisyon": 44300,
+      "net_pozisyon": 44300.0,
       "firma_tipi": "MUSTERI",
       "son_faturalar": [
         {
@@ -786,12 +213,12 @@
       "varsayilan_yon": "GIDER",
       "notlar": "",
       "acik_gider": 0,
-      "acik_gelir": 32700,
+      "acik_gelir": 32700.0,
       "geciken_gider": 0,
       "geciken_gelir": 0,
       "odenen_gider": 0,
       "tahsil_gelir": 0,
-      "net_pozisyon": 32700,
+      "net_pozisyon": 32700.0,
       "firma_tipi": "MUSTERI",
       "son_faturalar": [
         {
@@ -828,17 +255,17 @@
         "FTR-2026-0024"
       ],
       "toplam_borc": 0,
-      "toplam_odenen": 19500,
+      "toplam_odenen": 19500.0,
       "toplam_geciken": 0,
       "varsayilan_yon": "GIDER",
       "notlar": "",
       "acik_gider": 0,
-      "acik_gelir": 65000,
+      "acik_gelir": 65000.0,
       "geciken_gider": 0,
       "geciken_gelir": 0,
       "odenen_gider": 0,
-      "tahsil_gelir": 19500,
-      "net_pozisyon": 65000,
+      "tahsil_gelir": 19500.0,
+      "net_pozisyon": 65000.0,
       "firma_tipi": "MUSTERI",
       "son_faturalar": [
         {
@@ -862,6 +289,43 @@
           "tutar": 19500,
           "para_birimi": "TRY",
           "vade_tarihi": "2026-06-03",
+          "durum": "ODENDI",
+          "yon": "GELIR"
+        }
+      ]
+    },
+    {
+      "firma_id": 22,
+      "firma_adi": "British Town",
+      "eposta": "",
+      "telefon": "",
+      "yetkili_kisi": "",
+      "vergi_no": "",
+      "adres": "",
+      "aktif_mi": true,
+      "odeme_periyodu_gun": 30,
+      "varsayilan_yon": "GELIR",
+      "notlar": "",
+      "fatura_no_listesi": [
+        "FTR-2026-0032"
+      ],
+      "toplam_borc": 0,
+      "toplam_odenen": 25000.0,
+      "toplam_geciken": 0,
+      "acik_gider": 0,
+      "acik_gelir": 0,
+      "geciken_gider": 0,
+      "geciken_gelir": 0,
+      "odenen_gider": 0,
+      "tahsil_gelir": 25000.0,
+      "net_pozisyon": 0,
+      "firma_tipi": "MUSTERI",
+      "son_faturalar": [
+        {
+          "fatura_no": "FTR-2026-0032",
+          "tutar": 25000.0,
+          "para_birimi": "TRY",
+          "vade_tarihi": "2026-06-19",
           "durum": "ODENDI",
           "yon": "GELIR"
         }

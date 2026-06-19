@@ -4,6 +4,14 @@ function urlFaturaNo() {
   return new URLSearchParams(window.location.search).get("no");
 }
 
+function faturaKalanTutar(fatura) {
+  if (!fatura) return 0;
+  if (fatura.kalan_tutar != null) return fatura.kalan_tutar;
+  if (fatura.durum === "ODENDI" || fatura.durum === "IPTAL") return 0;
+  const odenen = Number(fatura.odenen_tutar || 0);
+  return Math.max(0, Number(fatura.tutar || 0) - odenen);
+}
+
 function sayfayiDoldur(fatura) {
   aktifFatura = fatura;
   document.title = `LiraFlow - ${fatura.fatura_no}`;
@@ -20,16 +28,26 @@ function sayfayiDoldur(fatura) {
     ? Utils.formatTarihUzun(fatura.odeme_tarihi)
     : "-";
   document.getElementById("detay-tutar").textContent = Utils.formatTRY(fatura.tutar, fatura.para_birimi);
+  const kalanTutar = faturaKalanTutar(fatura);
+  const kalanTutarEl = document.getElementById("detay-kalan-tutar");
+  if (kalanTutarEl) {
+    if (fatura.durum === "ODENDI" || fatura.durum === "IPTAL") {
+      kalanTutarEl.classList.add("hidden");
+    } else {
+      kalanTutarEl.textContent = `Kalan: ${Utils.formatTRY(kalanTutar, fatura.para_birimi)}`;
+      kalanTutarEl.classList.remove("hidden");
+    }
+  }
   document.getElementById("detay-yon").innerHTML = Utils.yonEtiketi(fatura.yon || "GIDER");
   document.getElementById("detay-kategori").textContent = fatura.kategori || "genel";
   document.getElementById("detay-oncelik").textContent = Utils.oncelikMetin(fatura.oncelik);
   document.getElementById("detay-vade-gun").textContent = Utils.periyotEtiketi(fatura.odeme_periyodu_gun || 30);
   document.getElementById("detay-firma-ozet").textContent = `${fatura.firma_adi} — ${Utils.periyotEtiketi(fatura.odeme_periyodu_gun || 30)}`;
 
-  const kalanEl = document.getElementById("detay-kalan-gun");
+  const kalanGunEl = document.getElementById("detay-kalan-gun");
   const kalanMetin = Utils.kalanGunMetin(fatura.kalan_gun, fatura.durum);
-  kalanEl.textContent = kalanMetin;
-  kalanEl.className =
+  kalanGunEl.textContent = kalanMetin;
+  kalanGunEl.className =
     fatura.kalan_gun !== null && fatura.kalan_gun < 0
       ? "font-body-md text-error font-bold"
       : fatura.kalan_gun !== null && fatura.kalan_gun <= 7
@@ -69,33 +87,14 @@ function sayfayiDoldur(fatura) {
   const yon = fatura.yon || "GIDER";
   const odemeKaydetBtn = document.getElementById("odeme-kaydet-btn");
   if (odemeKaydetBtn) {
+    const kapali = fatura.durum === "ODENDI" || fatura.durum === "IPTAL";
+    odemeKaydetBtn.disabled = kapali;
+    odemeKaydetBtn.classList.toggle("opacity-50", kapali);
+    odemeKaydetBtn.classList.toggle("pointer-events-none", kapali);
     odemeKaydetBtn.innerHTML = `
       <span class="material-symbols-outlined">${yon === "GELIR" ? "south_west" : "payments"}</span>
       ${yon === "GELIR" ? "Tahsilat Kaydet" : "Ödeme Kaydet"}`;
   }
-}
-
-function parseTutar(ham) {
-  const metin = String(ham ?? "").trim().replace(/\s/g, "");
-  if (!metin) return NaN;
-  if (metin.includes(",")) {
-    return parseFloat(metin.replace(/\./g, "").replace(",", "."));
-  }
-  return parseFloat(metin);
-}
-
-function formatTutarInput(deger) {
-  const sayi = Number(deger);
-  if (!Number.isFinite(sayi)) return "0";
-  return String(Math.max(0, Math.round(sayi * 100) / 100));
-}
-
-function odemeTutarGuncelle(delta) {
-  const input = document.getElementById("odeme-tutar");
-  if (!input) return;
-  const mevcut = parseTutar(input.value);
-  const taban = Number.isFinite(mevcut) ? mevcut : 0;
-  input.value = formatTutarInput(taban + delta);
 }
 
 function odemeModalAc() {
@@ -106,7 +105,7 @@ function odemeModalAc() {
     baslik.textContent = yon === "GELIR" ? "Tahsilat Kaydet" : "Ödeme Kaydet";
   }
   const tutarInput = document.getElementById("odeme-tutar");
-  if (tutarInput) tutarInput.value = formatTutarInput(aktifFatura.tutar);
+  if (tutarInput) tutarInput.value = faturaKalanTutar(aktifFatura);
   const tarihInput = document.getElementById("odeme-tarih");
   if (tarihInput) tarihInput.value = new Date().toISOString().slice(0, 10);
   const kanalInput = document.getElementById("odeme-kanal");
@@ -161,7 +160,7 @@ async function durumKaydet() {
 async function odemeKaydet() {
   if (!aktifFatura) return;
   const tutarInput = document.getElementById("odeme-tutar");
-  const tutar = parseTutar(tutarInput?.value);
+  const tutar = parseFloat(tutarInput?.value);
   const odeme_tarihi = document.getElementById("odeme-tarih")?.value;
   const kanal = document.getElementById("odeme-kanal")?.value.trim() || "";
   const notlar = document.getElementById("odeme-notlar")?.value.trim() || "";
@@ -190,10 +189,11 @@ async function odemeKaydet() {
     sayfayiDoldur(guncel);
     const yon = guncel.yon || "GIDER";
     const eylem = yon === "GELIR" ? "Tahsilat" : "Ödeme";
+    const kalan = faturaKalanTutar(guncel);
     const mesaj =
       guncel.durum === "ODENDI"
         ? `${eylem} kaydedildi. Fatura ödendi olarak işaretlendi.`
-        : `${eylem} kaydedildi. Kalan: ${Utils.formatTRY(Math.max(0, guncel.tutar - tutar), guncel.para_birimi)}`;
+        : `${eylem} kaydedildi. Kalan: ${Utils.formatTRY(kalan, guncel.para_birimi)}`;
     alert(mesaj);
   } catch (hata) {
     alert(`Kayıt başarısız: ${hata.message}`);
@@ -261,11 +261,9 @@ document.addEventListener("DOMContentLoaded", async () => {
       e.preventDefault();
       odemeKaydet();
     });
-    document.getElementById("odeme-tutar-azalt")?.addEventListener("click", () => odemeTutarGuncelle(-1000));
-    document.getElementById("odeme-tutar-artir")?.addEventListener("click", () => odemeTutarGuncelle(1000));
     document.getElementById("odeme-tutar-tam")?.addEventListener("click", () => {
       if (aktifFatura) {
-        document.getElementById("odeme-tutar").value = formatTutarInput(aktifFatura.tutar);
+        document.getElementById("odeme-tutar").value = faturaKalanTutar(aktifFatura);
       }
     });
 

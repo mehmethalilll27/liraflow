@@ -8,16 +8,28 @@
       "tutar": 9200,
       "para_birimi": "TRY",
       "vade_tarihi": "2026-06-10",
-      "durum": "GECIKTI",
+      "durum": "ODENDI",
       "notlar": "Nakliye hizmet bedeli",
       "olusturma_tarihi": "2026-05-26",
-      "guncelleme_tarihi": "2026-06-18",
-      "odeme_tarihi": null,
+      "guncelleme_tarihi": "2026-06-19",
+      "odeme_tarihi": "2026-06-19",
       "arsiv_mi": false,
       "kategori": "lojistik",
       "oncelik": "yuksek",
       "yon": "GIDER",
-      "tahsilat_gecmisi": []
+      "tahsilat_gecmisi": [
+        {
+          "baslik": "Tam Ödeme",
+          "aciklama": "Fatura tamamen ödendi olarak işaretlendi.",
+          "tarih": "2026-06-19"
+        },
+        {
+          "baslik": "Ödeme Kaydı",
+          "aciklama": "9200.00 TRY ödeme kaydedildi. Kasa: 25800.00 TRY",
+          "tarih": "2026-06-19"
+        }
+      ],
+      "odenen_tutar": 9200.0
     },
     {
       "fatura_id": 2,
@@ -27,16 +39,28 @@
       "tutar": 11200,
       "para_birimi": "TRY",
       "vade_tarihi": "2026-06-13",
-      "durum": "GECIKTI",
+      "durum": "ODENDI",
       "notlar": "Makina bakım hizmeti",
       "olusturma_tarihi": "2026-05-29",
-      "guncelleme_tarihi": "2026-06-18",
-      "odeme_tarihi": null,
+      "guncelleme_tarihi": "2026-06-19",
+      "odeme_tarihi": "2026-06-19",
       "arsiv_mi": false,
       "kategori": "bakim",
       "oncelik": "yuksek",
       "yon": "GIDER",
-      "tahsilat_gecmisi": []
+      "tahsilat_gecmisi": [
+        {
+          "baslik": "Tam Ödeme",
+          "aciklama": "Fatura tamamen ödendi olarak işaretlendi.",
+          "tarih": "2026-06-19"
+        },
+        {
+          "baslik": "Ödeme Kaydı",
+          "aciklama": "11200.00 TRY ödeme kaydedildi. Kasa: 56600.00 TRY",
+          "tarih": "2026-06-19"
+        }
+      ],
+      "odenen_tutar": 11200.0
     },
     {
       "fatura_id": 3,
@@ -55,7 +79,8 @@
       "kategori": "yazilim",
       "oncelik": "yuksek",
       "yon": "GIDER",
-      "tahsilat_gecmisi": []
+      "tahsilat_gecmisi": [],
+      "odenen_tutar": 0
     },
     {
       "fatura_id": 4,
@@ -74,12 +99,13 @@
       "kategori": "tarim",
       "oncelik": "yuksek",
       "yon": "GIDER",
-      "tahsilat_gecmisi": []
+      "tahsilat_gecmisi": [],
+      "odenen_tutar": 0
     },
     {
       "fatura_id": 5,
       "firma_id": 1,
-      "firma_adi": "Marmara Teknoloji",
+      "firma_adi": "Test Tedarikci A.Ş.",
       "fatura_no": "FTR-2026-0005",
       "tutar": 18500,
       "para_birimi": "TRY",
@@ -93,7 +119,8 @@
       "kategori": "yazilim",
       "oncelik": "yuksek",
       "yon": "GIDER",
-      "tahsilat_gecmisi": []
+      "tahsilat_gecmisi": [],
+      "odenen_tutar": 0
     },
     {
       "fatura_id": 6,
@@ -112,7 +139,8 @@
       "kategori": "hizmet",
       "oncelik": "yuksek",
       "yon": "GIDER",
-      "tahsilat_gecmisi": []
+      "tahsilat_gecmisi": [],
+      "odenen_tutar": 0
     },
     {
       "fatura_id": 7,
@@ -131,7 +159,8 @@
       "kategori": "tedarik",
       "oncelik": "yuksek",
       "yon": "GIDER",
-      "tahsilat_gecmisi": []
+      "tahsilat_gecmisi": [],
+      "odenen_tutar": 0
     },
     {
       "fatura_id": 8,
@@ -148,9 +177,10 @@
       "odeme_tarihi": null,
       "arsiv_mi": false,
       "kategori": "insaat",
-      "oncelik": "dusuk",
+      "oncelik": "orta",
       "yon": "GIDER",
-      "tahsilat_gecmisi": []
+      "tahsilat_gecmisi": [],
+      "odenen_tutar": 0
     },
     {
       "fatura_id": 9,
@@ -169,7 +199,8 @@
       "kategori": "lojistik",
       "oncelik": "orta",
       "yon": "GIDER",
-      "tahsilat_gecmisi": []
+      "tahsilat_gecmisi": [],
+      "odenen_tutar": 0
     },
     {
       "fatura_id": 10,
@@ -186,9 +217,10 @@
       "odeme_tarihi": null,
       "arsiv_mi": false,
       "kategori": "kimya",
-      "oncelik": "dusuk",
+      "oncelik": "orta",
       "yon": "GIDER",
-      "tahsilat_gecmisi": []
+      "tahsilat_gecmisi": [],
+      "odenen_tutar": 0
     },
     {
       "fatura_id": 11,
@@ -207,7 +239,8 @@
       "kategori": "otomotiv",
       "oncelik": "orta",
       "yon": "GIDER",
-      "tahsilat_gecmisi": []
+      "tahsilat_gecmisi": [],
+      "odenen_tutar": 0
     },
     {
       "fatura_id": 12,
@@ -226,7 +259,8 @@
       "kategori": "lojistik",
       "oncelik": "orta",
       "yon": "GIDER",
-      "tahsilat_gecmisi": []
+      "tahsilat_gecmisi": [],
+      "odenen_tutar": 0
     },
     {
       "fatura_id": 13,
@@ -245,7 +279,8 @@
       "kategori": "enerji",
       "oncelik": "orta",
       "yon": "GIDER",
-      "tahsilat_gecmisi": []
+      "tahsilat_gecmisi": [],
+      "odenen_tutar": 0
     },
     {
       "fatura_id": 26,
@@ -264,7 +299,8 @@
       "kategori": "uretim",
       "oncelik": "yuksek",
       "yon": "GIDER",
-      "tahsilat_gecmisi": []
+      "tahsilat_gecmisi": [],
+      "odenen_tutar": 0
     },
     {
       "fatura_id": 27,
@@ -281,9 +317,10 @@
       "odeme_tarihi": null,
       "arsiv_mi": false,
       "kategori": "kimya",
-      "oncelik": "dusuk",
+      "oncelik": "orta",
       "yon": "GIDER",
-      "tahsilat_gecmisi": []
+      "tahsilat_gecmisi": [],
+      "odenen_tutar": 0
     },
     {
       "fatura_id": 28,
@@ -302,7 +339,8 @@
       "kategori": "otomotiv",
       "oncelik": "orta",
       "yon": "GIDER",
-      "tahsilat_gecmisi": []
+      "tahsilat_gecmisi": [],
+      "odenen_tutar": 0
     },
     {
       "fatura_id": 14,
@@ -327,7 +365,8 @@
           "aciklama": "Havale ile ödendi",
           "tarih": "2026-06-08"
         }
-      ]
+      ],
+      "odenen_tutar": 6400.0
     },
     {
       "fatura_id": 15,
@@ -352,7 +391,8 @@
           "aciklama": "EFT ile ödendi",
           "tarih": "2026-05-28"
         }
-      ]
+      ],
+      "odenen_tutar": 14100.0
     },
     {
       "fatura_id": 16,
@@ -362,16 +402,28 @@
       "tutar": 42000,
       "para_birimi": "TRY",
       "vade_tarihi": "2026-06-08",
-      "durum": "GECIKTI",
+      "durum": "ODENDI",
       "notlar": "Q2 danışmanlık projesi",
       "olusturma_tarihi": "2026-05-24",
-      "guncelleme_tarihi": "2026-06-18",
-      "odeme_tarihi": null,
+      "guncelleme_tarihi": "2026-06-19",
+      "odeme_tarihi": "2026-06-19",
       "arsiv_mi": false,
       "kategori": "danismanlik",
       "oncelik": "yuksek",
       "yon": "GELIR",
-      "tahsilat_gecmisi": []
+      "tahsilat_gecmisi": [
+        {
+          "baslik": "Tam Ödeme",
+          "aciklama": "Fatura tamamen ödendi olarak işaretlendi.",
+          "tarih": "2026-06-19"
+        },
+        {
+          "baslik": "Tahsilat Kaydı",
+          "aciklama": "42000.00 TRY tahsilat kaydedildi. Kasa: 67800.00 TRY",
+          "tarih": "2026-06-19"
+        }
+      ],
+      "odenen_tutar": 42000.0
     },
     {
       "fatura_id": 17,
@@ -390,7 +442,8 @@
       "kategori": "yazilim",
       "oncelik": "yuksek",
       "yon": "GELIR",
-      "tahsilat_gecmisi": []
+      "tahsilat_gecmisi": [],
+      "odenen_tutar": 0
     },
     {
       "fatura_id": 18,
@@ -409,7 +462,8 @@
       "kategori": "pazarlama",
       "oncelik": "yuksek",
       "yon": "GELIR",
-      "tahsilat_gecmisi": []
+      "tahsilat_gecmisi": [],
+      "odenen_tutar": 0
     },
     {
       "fatura_id": 19,
@@ -428,7 +482,8 @@
       "kategori": "hizmet",
       "oncelik": "yuksek",
       "yon": "GELIR",
-      "tahsilat_gecmisi": []
+      "tahsilat_gecmisi": [],
+      "odenen_tutar": 0
     },
     {
       "fatura_id": 20,
@@ -447,7 +502,8 @@
       "kategori": "yazilim",
       "oncelik": "dusuk",
       "yon": "GELIR",
-      "tahsilat_gecmisi": []
+      "tahsilat_gecmisi": [],
+      "odenen_tutar": 0
     },
     {
       "fatura_id": 21,
@@ -466,7 +522,8 @@
       "kategori": "danismanlik",
       "oncelik": "orta",
       "yon": "GELIR",
-      "tahsilat_gecmisi": []
+      "tahsilat_gecmisi": [],
+      "odenen_tutar": 0
     },
     {
       "fatura_id": 22,
@@ -485,7 +542,8 @@
       "kategori": "bakim",
       "oncelik": "orta",
       "yon": "GELIR",
-      "tahsilat_gecmisi": []
+      "tahsilat_gecmisi": [],
+      "odenen_tutar": 0
     },
     {
       "fatura_id": 23,
@@ -504,7 +562,8 @@
       "kategori": "pazarlama",
       "oncelik": "orta",
       "yon": "GELIR",
-      "tahsilat_gecmisi": []
+      "tahsilat_gecmisi": [],
+      "odenen_tutar": 0
     },
     {
       "fatura_id": 29,
@@ -523,7 +582,8 @@
       "kategori": "yazilim",
       "oncelik": "dusuk",
       "yon": "GELIR",
-      "tahsilat_gecmisi": []
+      "tahsilat_gecmisi": [],
+      "odenen_tutar": 0
     },
     {
       "fatura_id": 30,
@@ -542,7 +602,8 @@
       "kategori": "danismanlik",
       "oncelik": "orta",
       "yon": "GELIR",
-      "tahsilat_gecmisi": []
+      "tahsilat_gecmisi": [],
+      "odenen_tutar": 0
     },
     {
       "fatura_id": 24,
@@ -567,7 +628,8 @@
           "aciklama": "Müşteri havale ile ödedi",
           "tarih": "2026-06-05"
         }
-      ]
+      ],
+      "odenen_tutar": 19500.0
     },
     {
       "fatura_id": 25,
@@ -592,30 +654,94 @@
           "aciklama": "Tam tahsilat",
           "tarih": "2026-05-24"
         }
-      ]
+      ],
+      "odenen_tutar": 12800.0
     },
     {
       "fatura_id": 31,
-      "firma_id": 9,
-      "firma_adi": "Gaziantep Tekstil",
+      "firma_id": 1,
+      "firma_adi": "Test Tedarikci A.Ş.",
       "fatura_no": "FTR-2026-0031",
-      "tutar": 40000.0,
+      "tutar": 50000.0,
       "para_birimi": "TRY",
-      "vade_tarihi": "2026-06-27",
+      "vade_tarihi": "2026-06-19",
       "durum": "BEKLIYOR",
       "notlar": "",
-      "olusturma_tarihi": "2026-06-18",
-      "guncelleme_tarihi": "2026-06-18",
+      "olusturma_tarihi": "2026-06-19",
+      "guncelleme_tarihi": "2026-06-19",
       "odeme_tarihi": null,
       "arsiv_mi": false,
       "kategori": "genel",
       "oncelik": "yuksek",
       "yon": "GELIR",
+      "odenen_tutar": 0,
       "tahsilat_gecmisi": [
         {
           "baslik": "Fatura Oluşturuldu",
-          "aciklama": "Vade: 2026-06-27 — 30 günde bir ödeme",
-          "tarih": "2026-06-18"
+          "aciklama": "Vade: 2026-06-19 — 30 günde bir ödeme",
+          "tarih": "2026-06-19"
+        }
+      ]
+    },
+    {
+      "fatura_id": 32,
+      "firma_id": 22,
+      "firma_adi": "British Town",
+      "fatura_no": "FTR-2026-0032",
+      "tutar": 25000.0,
+      "para_birimi": "TRY",
+      "vade_tarihi": "2026-06-19",
+      "durum": "ODENDI",
+      "notlar": "",
+      "olusturma_tarihi": "2026-06-19",
+      "guncelleme_tarihi": "2026-06-19",
+      "odeme_tarihi": "2026-06-19",
+      "arsiv_mi": false,
+      "kategori": "genel",
+      "oncelik": "yuksek",
+      "yon": "GELIR",
+      "odenen_tutar": 25000.0,
+      "tahsilat_gecmisi": [
+        {
+          "baslik": "Tam Ödeme",
+          "aciklama": "Fatura tamamen ödendi olarak işaretlendi.",
+          "tarih": "2026-06-19"
+        },
+        {
+          "baslik": "Tahsilat Kaydı",
+          "aciklama": "25000.00 TRY tahsilat kaydedildi. Kasa: 81600.00 TRY",
+          "tarih": "2026-06-19"
+        },
+        {
+          "baslik": "Fatura Oluşturuldu",
+          "aciklama": "Vade: 2026-06-19 — 30 günde bir ödeme",
+          "tarih": "2026-06-19"
+        }
+      ]
+    },
+    {
+      "fatura_id": 33,
+      "firma_id": 1,
+      "firma_adi": "Test Tedarikci A.Ş.",
+      "fatura_no": "FTR-2026-0033",
+      "tutar": 35000.0,
+      "para_birimi": "TRY",
+      "vade_tarihi": "2026-06-19",
+      "durum": "BEKLIYOR",
+      "notlar": "",
+      "olusturma_tarihi": "2026-06-19",
+      "guncelleme_tarihi": "2026-06-19",
+      "odeme_tarihi": null,
+      "arsiv_mi": false,
+      "kategori": "karma",
+      "oncelik": "yuksek",
+      "yon": "GIDER",
+      "odenen_tutar": 0,
+      "tahsilat_gecmisi": [
+        {
+          "baslik": "Fatura Oluşturuldu",
+          "aciklama": "Vade: 2026-06-19 — 30 günde bir ödeme",
+          "tarih": "2026-06-19"
         }
       ]
     }

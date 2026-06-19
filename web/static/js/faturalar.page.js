@@ -361,45 +361,324 @@ function drawerKapat() {
   icerik.classList.add("translate-x-full");
 }
 
-function firmaPeriyotGoster() {
+let gosterilenFirmaOnerileri = [];
+let firmaOneriSeciliIndex = -1;
+
+function firmaOnerileriFiltrele(metin) {
+  const arama = metin.trim().toLowerCase();
+  const kaynak = tumFirmalar.filter((f) => f.aktif_mi !== false);
+  if (!arama) return kaynak.slice(0, 10);
+  return kaynak.filter((f) => f.firma_adi.toLowerCase().includes(arama)).slice(0, 10);
+}
+
+function firmaOnerileriGizle() {
+  const panel = document.getElementById("yeni-firma-oneriler");
+  if (panel) {
+    panel.classList.add("hidden");
+    panel.innerHTML = "";
+  }
+  gosterilenFirmaOnerileri = [];
+  firmaOneriSeciliIndex = -1;
+}
+
+function firmaOnerileriCiz(firmalar) {
+  const panel = document.getElementById("yeni-firma-oneriler");
+  if (!panel) return;
+
+  gosterilenFirmaOnerileri = firmalar;
+
+  if (!firmalar.length) {
+    panel.innerHTML =
+      '<p class="px-md py-sm text-sm text-on-surface-variant">Eşleşen firma bulunamadı. Yeni firma adı yazabilirsiniz.</p>';
+    panel.classList.remove("hidden");
+    return;
+  }
+
+  panel.innerHTML = firmalar
+    .map((firma, index) => {
+      const baslik = Utils.firmaBasHarfleri(firma.firma_adi);
+      const periyot = Utils.periyotEtiketi(firma.odeme_periyodu_gun || firma.odeme_vadesi_gun || 30);
+      const yon = firma.varsayilan_yon === "GELIR" ? "Gelir" : "Gider";
+      const secili = index === firmaOneriSeciliIndex;
+      return `
+        <button
+          type="button"
+          class="w-full flex items-center gap-sm px-md py-sm text-left transition-colors border-b border-outline-variant/40 last:border-b-0 ${
+            secili ? "bg-surface-container-low" : "hover:bg-surface-container-low"
+          }"
+          data-firma-oneri-index="${index}"
+        >
+          <span class="w-9 h-9 rounded-full bg-primary/10 text-primary flex items-center justify-center text-xs font-bold shrink-0">${baslik}</span>
+          <span class="min-w-0 flex-1">
+            <span class="block text-sm font-semibold text-on-surface truncate">${firma.firma_adi}</span>
+            <span class="block text-xs text-on-surface-variant">${periyot} · ${yon}</span>
+          </span>
+        </button>`;
+    })
+    .join("");
+  panel.classList.remove("hidden");
+}
+
+function firmaBilgiMetniGuncelle() {
   const ad = document.getElementById("yeni-firma-adi").value.trim();
   const firma = tumFirmalar.find((f) => f.firma_adi === ad);
   const info = document.getElementById("yeni-vade-info");
-  const periyotInput = document.getElementById("yeni-odeme-periyodu");
+  const yonSelect = document.getElementById("yeni-yon");
   if (!firma) {
     if (info) info.textContent = "";
     return;
   }
+  const periyotInput = document.getElementById("yeni-odeme-periyodu");
+  const gun = Utils.periyotSinirla(
+    periyotInput?.value || firma.odeme_periyodu_gun || firma.odeme_vadesi_gun || 30
+  );
+  const yon = yonSelect?.value || "GIDER";
+  const eylem = yon === "GELIR" ? "tahsilat" : "ödeme";
+  if (info) info.textContent = `Bu firmadan ${Utils.periyotEtiketi(gun)} ${eylem} beklenir`;
+}
+
+function firmaSecildiVarsayilanlariUygula({ yonUygula = true } = {}) {
+  const ad = document.getElementById("yeni-firma-adi").value.trim();
+  const firma = tumFirmalar.find((f) => f.firma_adi === ad);
+  if (!firma) {
+    firmaBilgiMetniGuncelle();
+    return;
+  }
   const gun = Utils.periyotSinirla(firma.odeme_periyodu_gun || firma.odeme_vadesi_gun || 30);
+  const periyotInput = document.getElementById("yeni-odeme-periyodu");
   if (periyotInput) periyotInput.value = String(gun);
   const yonSelect = document.getElementById("yeni-yon");
-  if (yonSelect && firma.varsayilan_yon) {
+  if (yonUygula && yonSelect && firma.varsayilan_yon) {
     yonSelect.value = firma.varsayilan_yon;
   }
-  if (info) {
-    const yon = yonSelect?.value || firma.varsayilan_yon || "GIDER";
-    const eylem = yon === "GELIR" ? "tahsilat" : "ödeme";
-    info.textContent = `Bu firmadan ${Utils.periyotEtiketi(gun)} ${eylem} beklenir`;
+  firmaBilgiMetniGuncelle();
+}
+
+function firmaOneriSec(ad) {
+  const input = document.getElementById("yeni-firma-adi");
+  if (input) input.value = ad;
+  firmaOnerileriGizle();
+  firmaSecildiVarsayilanlariUygula();
+}
+
+function yeniFirmaAdiGuncelle() {
+  const input = document.getElementById("yeni-firma-adi");
+  if (!input) return;
+  firmaOneriSeciliIndex = -1;
+  firmaOnerileriCiz(firmaOnerileriFiltrele(input.value));
+}
+
+function yeniFirmaAdiBagla() {
+  const input = document.getElementById("yeni-firma-adi");
+  const panel = document.getElementById("yeni-firma-oneriler");
+  if (!input || !panel) return;
+
+  input.addEventListener("input", yeniFirmaAdiGuncelle);
+  input.addEventListener("focus", yeniFirmaAdiGuncelle);
+  input.addEventListener("blur", () => {
+    setTimeout(() => {
+      firmaOnerileriGizle();
+      firmaBilgiMetniGuncelle();
+    }, 150);
+  });
+
+  input.addEventListener("keydown", (e) => {
+    if (panel.classList.contains("hidden") || !gosterilenFirmaOnerileri.length) return;
+
+    if (e.key === "ArrowDown") {
+      e.preventDefault();
+      firmaOneriSeciliIndex = Math.min(firmaOneriSeciliIndex + 1, gosterilenFirmaOnerileri.length - 1);
+      firmaOnerileriCiz(gosterilenFirmaOnerileri);
+    } else if (e.key === "ArrowUp") {
+      e.preventDefault();
+      firmaOneriSeciliIndex = Math.max(firmaOneriSeciliIndex - 1, 0);
+      firmaOnerileriCiz(gosterilenFirmaOnerileri);
+    } else if (e.key === "Enter" && firmaOneriSeciliIndex >= 0) {
+      e.preventDefault();
+      firmaOneriSec(gosterilenFirmaOnerileri[firmaOneriSeciliIndex].firma_adi);
+    } else if (e.key === "Escape") {
+      firmaOnerileriGizle();
+    }
+  });
+
+  panel.addEventListener("mousedown", (e) => e.preventDefault());
+  panel.addEventListener("click", (e) => {
+    const btn = e.target.closest("[data-firma-oneri-index]");
+    if (!btn) return;
+    const index = parseInt(btn.getAttribute("data-firma-oneri-index"), 10);
+    const firma = gosterilenFirmaOnerileri[index];
+    if (firma) firmaOneriSec(firma.firma_adi);
+  });
+}
+
+const VARSAYILAN_KATEGORILER = [
+  "genel",
+  "yazilim",
+  "lojistik",
+  "hizmet",
+  "tedarik",
+  "danismanlik",
+  "pazarlama",
+  "gida",
+  "uretim",
+  "insaat",
+  "otomotiv",
+];
+
+function mevcutKategoriler() {
+  const set = new Set(VARSAYILAN_KATEGORILER);
+  tumFaturalarHam.forEach((f) => {
+    const k = (f.kategori || "").trim();
+    if (k) set.add(k);
+  });
+  return [...set].sort((a, b) => a.localeCompare(b, "tr"));
+}
+
+function kategoriFaturaAdedi(kategori) {
+  return tumFaturalarHam.filter((f) => (f.kategori || "genel") === kategori).length;
+}
+
+let gosterilenKategoriOnerileri = [];
+let kategoriOneriSeciliIndex = -1;
+
+function kategoriOnerileriFiltrele(metin) {
+  const arama = metin.trim().toLowerCase();
+  const kaynak = mevcutKategoriler();
+  if (!arama) return kaynak.slice(0, 12);
+  return kaynak.filter((k) => k.toLowerCase().includes(arama)).slice(0, 12);
+}
+
+function kategoriOnerileriGizle() {
+  const panel = document.getElementById("yeni-kategori-oneriler");
+  if (panel) {
+    panel.classList.add("hidden");
+    panel.innerHTML = "";
   }
+  gosterilenKategoriOnerileri = [];
+  kategoriOneriSeciliIndex = -1;
+}
+
+function kategoriOnerileriCiz(kategoriler) {
+  const panel = document.getElementById("yeni-kategori-oneriler");
+  if (!panel) return;
+
+  gosterilenKategoriOnerileri = kategoriler;
+
+  if (!kategoriler.length) {
+    panel.innerHTML =
+      '<p class="px-md py-sm text-sm text-on-surface-variant">Eşleşen kategori bulunamadı. Yeni kategori yazabilirsiniz.</p>';
+    panel.classList.remove("hidden");
+    return;
+  }
+
+  panel.innerHTML = kategoriler
+    .map((kategori, index) => {
+      const baslik = Utils.firmaBasHarfleri(kategori);
+      const adet = kategoriFaturaAdedi(kategori);
+      const alt = adet > 0 ? `${adet} fatura` : "Henüz kullanılmadı";
+      const secili = index === kategoriOneriSeciliIndex;
+      return `
+        <button
+          type="button"
+          class="w-full flex items-center gap-sm px-md py-sm text-left transition-colors border-b border-outline-variant/40 last:border-b-0 ${
+            secili ? "bg-surface-container-low" : "hover:bg-surface-container-low"
+          }"
+          data-kategori-oneri-index="${index}"
+        >
+          <span class="w-9 h-9 rounded-full bg-secondary/10 text-secondary flex items-center justify-center text-xs font-bold shrink-0">${baslik}</span>
+          <span class="min-w-0 flex-1">
+            <span class="block text-sm font-semibold text-on-surface truncate">${kategori}</span>
+            <span class="block text-xs text-on-surface-variant">${alt}</span>
+          </span>
+        </button>`;
+    })
+    .join("");
+  panel.classList.remove("hidden");
+}
+
+function kategoriOneriSec(kategori) {
+  const input = document.getElementById("yeni-kategori");
+  if (input) input.value = kategori;
+  kategoriOnerileriGizle();
+}
+
+function yeniKategoriGuncelle() {
+  const input = document.getElementById("yeni-kategori");
+  if (!input) return;
+  kategoriOneriSeciliIndex = -1;
+  kategoriOnerileriCiz(kategoriOnerileriFiltrele(input.value));
+}
+
+function yeniKategoriBagla() {
+  const input = document.getElementById("yeni-kategori");
+  const panel = document.getElementById("yeni-kategori-oneriler");
+  if (!input || !panel) return;
+
+  input.addEventListener("input", yeniKategoriGuncelle);
+  input.addEventListener("focus", yeniKategoriGuncelle);
+  input.addEventListener("blur", () => {
+    setTimeout(kategoriOnerileriGizle, 150);
+  });
+
+  input.addEventListener("keydown", (e) => {
+    if (panel.classList.contains("hidden") || !gosterilenKategoriOnerileri.length) return;
+
+    if (e.key === "ArrowDown") {
+      e.preventDefault();
+      kategoriOneriSeciliIndex = Math.min(
+        kategoriOneriSeciliIndex + 1,
+        gosterilenKategoriOnerileri.length - 1
+      );
+      kategoriOnerileriCiz(gosterilenKategoriOnerileri);
+    } else if (e.key === "ArrowUp") {
+      e.preventDefault();
+      kategoriOneriSeciliIndex = Math.max(kategoriOneriSeciliIndex - 1, 0);
+      kategoriOnerileriCiz(gosterilenKategoriOnerileri);
+    } else if (e.key === "Enter" && kategoriOneriSeciliIndex >= 0) {
+      e.preventDefault();
+      kategoriOneriSec(gosterilenKategoriOnerileri[kategoriOneriSeciliIndex]);
+    } else if (e.key === "Escape") {
+      kategoriOnerileriGizle();
+    }
+  });
+
+  panel.addEventListener("mousedown", (e) => e.preventDefault());
+  panel.addEventListener("click", (e) => {
+    const btn = e.target.closest("[data-kategori-oneri-index]");
+    if (!btn) return;
+    const index = parseInt(btn.getAttribute("data-kategori-oneri-index"), 10);
+    const kategori = gosterilenKategoriOnerileri[index];
+    if (kategori) kategoriOneriSec(kategori);
+  });
 }
 
 function yeniFaturaModalAc() {
   const modal = document.getElementById("yeni-fatura-modal");
-  const liste = document.getElementById("yeni-firma-listesi");
-  liste.innerHTML = tumFirmalar.map((f) => `<option value="${f.firma_adi}">`).join("");
   document.getElementById("yeni-firma-adi").value = "";
+  firmaOnerileriGizle();
   document.getElementById("yeni-tutar").value = "";
   document.getElementById("yeni-vade").value = new Date().toISOString().slice(0, 10);
   document.getElementById("yeni-notlar").value = "";
+  document.getElementById("yeni-kategori").value = "genel";
+  kategoriOnerileriGizle();
   document.getElementById("yeni-odeme-periyodu").value = "30";
   document.getElementById("yeni-yon").value = "GIDER";
   document.getElementById("yeni-vade-info").textContent = "";
   modal.classList.remove("hidden");
   modal.classList.add("flex");
+  const firmaInput = document.getElementById("yeni-firma-adi");
+  if (firmaInput) {
+    setTimeout(() => {
+      firmaInput.focus();
+      yeniFirmaAdiGuncelle();
+    }, 0);
+  }
 }
 
 function yeniFaturaModalKapat() {
   const modal = document.getElementById("yeni-fatura-modal");
+  firmaOnerileriGizle();
+  kategoriOnerileriGizle();
   modal.classList.add("hidden");
   modal.classList.remove("flex");
 }
@@ -451,23 +730,47 @@ async function yeniFaturaKaydet() {
   const notlar = document.getElementById("yeni-notlar").value.trim();
   const odeme_periyodu_gun = Utils.periyotSinirla(document.getElementById("yeni-odeme-periyodu").value);
   const yon = document.getElementById("yeni-yon").value;
+  const kategori = document.getElementById("yeni-kategori").value.trim() || "genel";
+  const kaydetBtn = document.getElementById("yeni-fatura-kaydet");
 
-  if (!firma_adi || !tutar || !vade_tarihi) {
-    alert("Firma adı, tutar ve vade tarihi zorunludur.");
+  if (!firma_adi || !vade_tarihi) {
+    alert("Firma adı ve vade tarihi zorunludur.");
+    return;
+  }
+  if (!Number.isFinite(tutar) || tutar <= 0) {
+    alert("Geçerli bir tutar girin.");
     return;
   }
 
-  const yeni = await InvoiceService.ekle({
-    firma_adi,
-    tutar,
-    vade_tarihi: vade_tarihi || undefined,
-    notlar,
-    odeme_periyodu_gun,
-    yon,
-  });
-  yeniFaturaModalKapat();
-  await faturalariYenile();
-  window.location.href = Utils.faturaDetayUrl(yeni.fatura_no);
+  try {
+    if (kaydetBtn) {
+      kaydetBtn.disabled = true;
+      kaydetBtn.textContent = "Kaydediliyor...";
+    }
+    const yeni = await InvoiceService.ekle({
+      firma_adi,
+      tutar,
+      vade_tarihi: vade_tarihi || undefined,
+      notlar,
+      odeme_periyodu_gun,
+      yon,
+      kategori,
+    });
+    const firmaVardi = tumFirmalar.some((f) => f.firma_adi === firma_adi);
+    if (!firmaVardi) {
+      tumFirmalar = await FirmService.listele();
+    }
+    yeniFaturaModalKapat();
+    await faturalariYenile();
+    window.location.href = Utils.faturaDetayUrl(yeni.fatura_no);
+  } catch (hata) {
+    alert(`Fatura eklenemedi: ${hata.message}`);
+  } finally {
+    if (kaydetBtn) {
+      kaydetBtn.disabled = false;
+      kaydetBtn.textContent = "Kaydet";
+    }
+  }
 }
 
 document.addEventListener("DOMContentLoaded", async () => {
@@ -501,7 +804,8 @@ document.addEventListener("DOMContentLoaded", async () => {
     document.getElementById("filtre-tarih-bitis").addEventListener("change", filtreUygula);
     document.getElementById("filtre-yon").addEventListener("change", filtreUygula);
     document.getElementById("filtre-durum").addEventListener("change", filtreUygula);
-    document.getElementById("yeni-yon").addEventListener("change", firmaPeriyotGoster);
+    document.getElementById("yeni-yon").addEventListener("change", firmaBilgiMetniGuncelle);
+    document.getElementById("yeni-odeme-periyodu").addEventListener("input", firmaBilgiMetniGuncelle);
 
     const ustAra = document.getElementById("ust-ara");
     if (ustAra) {
@@ -512,8 +816,8 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     document.getElementById("disa-aktar-btn").addEventListener("click", disaAktar);
     document.getElementById("yeni-fatura-btn").addEventListener("click", yeniFaturaModalAc);
-    document.getElementById("yeni-firma-adi").addEventListener("change", firmaPeriyotGoster);
-    document.getElementById("yeni-firma-adi").addEventListener("blur", firmaPeriyotGoster);
+    yeniFirmaAdiBagla();
+    yeniKategoriBagla();
     document.getElementById("yeni-fatura-kapat").addEventListener("click", yeniFaturaModalKapat);
     document.getElementById("yeni-fatura-iptal").addEventListener("click", yeniFaturaModalKapat);
     document.getElementById("yeni-fatura-kaydet").addEventListener("click", yeniFaturaKaydet);
@@ -525,10 +829,13 @@ document.addEventListener("DOMContentLoaded", async () => {
       const params = new URLSearchParams(window.location.search);
       const yonParam = params.get("yon");
       const firmaParam = params.get("firma") || params.get("firma_adi");
-      if (yonParam) document.getElementById("yeni-yon").value = yonParam.toUpperCase();
-      if (firmaParam) document.getElementById("yeni-firma-adi").value = firmaParam;
       yeniFaturaModalAc();
-      if (firmaParam) firmaPeriyotGoster();
+      if (yonParam) document.getElementById("yeni-yon").value = yonParam.toUpperCase();
+      if (firmaParam) {
+        document.getElementById("yeni-firma-adi").value = firmaParam;
+        firmaSecildiVarsayilanlariUygula({ yonUygula: !yonParam });
+        firmaOnerileriGizle();
+      }
     }
 
     document.getElementById("fatura-tablo-body").addEventListener("click", async (e) => {

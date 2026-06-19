@@ -140,7 +140,7 @@ function dashboardRender(d) {
   const gidenDonem = giden.donem_toplam ?? giden.bekleyen_toplam;
 
   metinAyarla("dash-gelen-toplam", Utils.formatTRY(gelenDonem));
-  const gelenAltParca = [`${donem} gün içinde`, `${gelen.donem_adedi ?? gelen.bekleyen_adedi} fatura`];
+  const gelenAltParca = [`${donem} gün · henüz kasada değil`, `${gelen.donem_adedi ?? gelen.bekleyen_adedi} açık fatura`];
   if ((gelen.donem_geciken_adedi ?? gelen.geciken_adedi) > 0) {
     gelenAltParca.push(`${gelen.donem_geciken_adedi ?? gelen.geciken_adedi} gecikmiş`);
   }
@@ -150,7 +150,7 @@ function dashboardRender(d) {
   metinAyarla("dash-gelen-alt", gelenAltParca.join(" · "));
 
   metinAyarla("dash-giden-toplam", Utils.formatTRY(gidenDonem));
-  const gidenAltParca = [`${donem} gün içinde`, `${giden.donem_adedi ?? giden.bekleyen_adedi} fatura`];
+  const gidenAltParca = [`${donem} gün · henüz ödenmedi`, `${giden.donem_adedi ?? giden.bekleyen_adedi} açık fatura`];
   if ((giden.donem_geciken_adedi ?? giden.geciken_adedi) > 0) {
     gidenAltParca.push(`${Utils.formatTRY(giden.donem_geciken)} gecikmiş`);
   }
@@ -166,7 +166,7 @@ function dashboardRender(d) {
   if (bulToplam && bulAlt) {
     if (d.bulunmasi_gereken > 0) {
       bulToplam.textContent = Utils.formatTRY(d.bulunmasi_gereken);
-      bulAlt.textContent = `${donem} gün içinde kapatmanız gereken nakit açığı`;
+      bulAlt.textContent = `${donem} gün nakit açığı (giden − gelen − kasa). Ödeme yapınca kasa ve giden birlikte düşer; bu rakam çoğu zaman değişmez.`;
       if (bulKart) {
         bulKart.classList.remove("bg-secondary-container");
         bulKart.classList.add("bg-primary");
@@ -200,8 +200,8 @@ function dashboardRender(d) {
   const barGiden = el("dash-bar-giden");
   if (barGelen) barGelen.style.width = `${gelenYuzde}%`;
   if (barGiden) barGiden.style.width = `${gidenYuzde}%`;
-  metinAyarla("dash-bar-gelen-etiket", `Gelen ${Utils.formatTRY(gelenDonem)}`);
-  metinAyarla("dash-bar-giden-etiket", `Giden ${Utils.formatTRY(gidenDonem)}`);
+  metinAyarla("dash-bar-gelen-etiket", `Tahsil edilecek ${Utils.formatTRY(gelenDonem)}`);
+  metinAyarla("dash-bar-giden-etiket", `Ödenecek ${Utils.formatTRY(gidenDonem)}`);
 
   const hareketler = d.yaklasan_hareketler || [];
   metinAyarla("dash-hareket-sayi", `${hareketler.length} hareket · ${d.donem_gun} gün`);
