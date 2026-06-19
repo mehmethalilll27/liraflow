@@ -176,32 +176,30 @@ YENI_FIRMALAR = [
 
 
 def main() -> None:
-    with open(DATA / "firma_data.json", encoding="utf-8") as f:
-        firma_veri = json.load(f)
-
-    mevcut_idler = {x["firma_id"] for x in firma_veri["firmalar"]}
-    for firma in YENI_FIRMALAR:
-        if firma["firma_id"] not in mevcut_idler:
-            firma_veri["firmalar"].append(firma)
-
-    with open(DATA / "firma_data.json", "w", encoding="utf-8") as f:
-        json.dump(firma_veri, f, ensure_ascii=False, indent=2)
-
-    with open(DATA / "fatura_data.json", "w", encoding="utf-8") as f:
-        json.dump({"faturalar": FATURALAR}, f, ensure_ascii=False, indent=2)
-
-    with open(DATA / "ayarlar.json", encoding="utf-8") as f:
-        ayarlar = json.load(f)
-    ayarlar["mevcut_kasa_bakiyesi"] = 35000.0
-    ayarlar["bildirim_gun_siniri"] = 7
-    with open(DATA / "ayarlar.json", "w", encoding="utf-8") as f:
-        json.dump(ayarlar, f, ensure_ascii=False, indent=2)
-
     import sys
+
     sys.path.insert(0, str(ROOT))
+    import config  # noqa: F401
+
+    from data_access import get_store
     from services.cashflow_service import CashflowService
 
-    svc = CashflowService()
+    store = get_store()
+
+    mevcut_firmalar = {f["firma_id"]: f for f in store.get_firmalar()}
+    for firma in YENI_FIRMALAR:
+        if firma["firma_id"] not in mevcut_firmalar:
+            mevcut_firmalar[firma["firma_id"]] = firma
+
+    store.save_firmalar(list(mevcut_firmalar.values()))
+    store.save_faturalar(FATURALAR)
+
+    ayarlar = store.get_ayarlar()
+    ayarlar["mevcut_kasa_bakiyesi"] = 35000.0
+    ayarlar["bildirim_gun_siniri"] = 7
+    store.save_ayarlar(ayarlar)
+
+    svc = CashflowService(store)
     svc.sync_all()
     d = svc.get_nakit_dashboard(30)
     print("Demo veri yüklendi.")

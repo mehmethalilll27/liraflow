@@ -4,7 +4,7 @@ import secrets
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
-from data_access.json_store import JsonStore
+from data_access import get_store
 
 SECRET_DOSYA = Path(__file__).resolve().parent.parent / "data" / "auth_secret.txt"
 ALGORITHM = "HS256"
@@ -12,8 +12,8 @@ TOKEN_SAAT = 24
 
 
 class AuthService:
-    def __init__(self, store: JsonStore | None = None) -> None:
-        self.store = store or JsonStore()
+    def __init__(self, store=None) -> None:
+        self.store = store or get_store()
         self._varsayilan_kullanici_olustur()
 
     def _secret_al(self) -> str:

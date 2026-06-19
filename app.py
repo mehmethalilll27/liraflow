@@ -4,6 +4,7 @@ from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 from pathlib import Path
 
+import config  # noqa: F401 — .env yüklenir
 from services.auth_routes import auth_router_olustur, oturum_zorunlu
 from services.cashflow_service import CashflowService
 

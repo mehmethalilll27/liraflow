@@ -1,13 +1,14 @@
 from datetime import date, timedelta
 
-from data_access.json_store import JsonStore
+from data_access import get_store
+from config import settings
 from models.firma import Firma
 from models.fatura import Fatura
 
 
 class CashflowService:
-    def __init__(self, store: JsonStore | None = None) -> None:
-        self.store = store or JsonStore()
+    def __init__(self, store=None) -> None:
+        self.store = store or get_store()
 
     def _firma_adi_haritasi(self, firmalar: list[dict]) -> dict[int, str]:
         return {firma["firma_id"]: firma["firma_adi"] for firma in firmalar}
@@ -237,7 +238,29 @@ class CashflowService:
             "toplam_geciken": round(geciken_gider + geciken_gelir, 2),
         }
 
-    def sync_all(self) -> tuple[list[dict], list[dict]]:
+    def _store_upsert_firma(self, firma: dict) -> None:
+        if hasattr(self.store, "upsert_firma"):
+            self.store.upsert_firma(firma)
+        else:
+            self.store.save_firmalar([firma])
+
+    def _store_upsert_fatura(self, fatura: dict) -> None:
+        if hasattr(self.store, "upsert_fatura"):
+            self.store.upsert_fatura(fatura)
+        else:
+            self.store.save_faturalar([fatura])
+
+    def _store_delete_fatura(self, fatura_no: str) -> None:
+        if hasattr(self.store, "delete_fatura_by_no"):
+            self.store.delete_fatura_by_no(fatura_no)
+            return
+        _, faturalar = self.sync_all(kaydet=False)
+        yeni_liste = [x for x in faturalar if x["fatura_no"] != fatura_no]
+        if len(yeni_liste) == len(faturalar):
+            raise ValueError("Fatura bulunamadi.")
+        self.store.save_faturalar(yeni_liste)
+
+    def sync_all(self, kaydet: bool | None = None) -> tuple[list[dict], list[dict]]:
         firmalar = self.store.get_firmalar()
         faturalar = self.store.get_faturalar()
         ayarlar = self.get_ayarlar()
@@ -249,6 +272,7 @@ class CashflowService:
         firma_adi_haritasi = self._firma_adi_haritasi(firmalar)
         firma_fatura_haritasi: dict[int, list[dict]] = {}
         bugun = date.today()
+        veri_degisti = False
 
         for fatura in faturalar:
             fatura["firma_adi"] = fatura.get("firma_adi") or firma_adi_haritasi.get(fatura["firma_id"], "")
@@ -263,6 +287,7 @@ class CashflowService:
             fatura.setdefault("odenen_tutar", 0)
             if fatura["durum"] == "ODENDI" and self._odenen_tutar(fatura) < float(fatura["tutar"]):
                 fatura["odenen_tutar"] = round(float(fatura["tutar"]), 2)
+                veri_degisti = True
 
             if (
                 otomatik_gecikti
@@ -274,6 +299,7 @@ class CashflowService:
                     fatura["durum"] = "GECIKTI"
                     fatura["guncelleme_tarihi"] = bugun.isoformat()
                     self._gecmis_ekle(fatura, "Gecikti", "Vade tarihi geçti, otomatik işaretlendi.")
+                    veri_degisti = True
 
             firma_fatura_haritasi.setdefault(fatura["firma_id"], []).append(fatura)
 
@@ -300,10 +326,17 @@ class CashflowService:
         for fatura in faturalar:
             if fatura["durum"] in {"BEKLIYOR", "GECIKTI"} and not fatura.get("arsiv_mi", False):
                 periyot = firma_periyot_haritasi.get(fatura["firma_id"], 30)
-                fatura["oncelik"] = self._hesapla_oncelik(fatura, periyot)
+                yeni_oncelik = self._hesapla_oncelik(fatura, periyot)
+                if fatura.get("oncelik") != yeni_oncelik:
+                    fatura["oncelik"] = yeni_oncelik
+                    if settings.DATA_STORE == "supabase":
+                        veri_degisti = True
 
-        self.store.save_firmalar(firmalar)
-        self.store.save_faturalar(faturalar)
+        if kaydet is None:
+            kaydet = settings.DATA_STORE == "json" or veri_degisti
+        if kaydet:
+            self.store.save_firmalar(firmalar)
+            self.store.save_faturalar(faturalar)
         return firmalar, faturalar
 
     def list_firmalar(self) -> list[dict]:
@@ -342,8 +375,8 @@ class CashflowService:
 
         return self._faturalari_odeme_sirasina_gore(sonuc)
 
-    def get_firma_by_name(self, firma_adi: str) -> dict | None:
-        firmalar, _ = self.sync_all()
+    def get_firma_by_name(self, firma_adi: str, kaydet: bool | None = None) -> dict | None:
+        firmalar, _ = self.sync_all(kaydet=kaydet)
         hedef = firma_adi.strip().casefold()
         for firma in firmalar:
             if firma["firma_adi"].strip().casefold() == hedef:
@@ -375,9 +408,11 @@ class CashflowService:
             periyot = int(ayarlar.get("varsayilan_odeme_periyodu", ayarlar.get("varsayilan_vade_gunu", 30)))
         periyot = self._periyot_normalize(int(periyot))
 
-        firmalar, _ = self.sync_all()
-        if self.get_firma_by_name(firma_adi):
-            raise ValueError("Bu isimde firma zaten var.")
+        firmalar, _ = self.sync_all(kaydet=False)
+        hedef_ad = firma_adi.strip().casefold()
+        for mevcut in firmalar:
+            if mevcut["firma_adi"].strip().casefold() == hedef_ad:
+                raise ValueError("Bu isimde firma zaten var.")
 
         yon = varsayilan_yon.upper()
         if yon not in {"GIDER", "GELIR"}:
@@ -398,13 +433,17 @@ class CashflowService:
             notlar=notlar.strip(),
             fatura_no_listesi=[],
         )
-        firmalar.append(firma.to_dict())
-        self.store.save_firmalar(firmalar)
-        self.sync_all()
-        return firma.to_dict()
+        firma_dict = firma.to_dict()
+        firmalar.append(firma_dict)
+        self._store_upsert_firma(firma_dict)
+        guncel_firmalar, _ = self.sync_all(kaydet=False)
+        for firma in guncel_firmalar:
+            if firma["firma_adi"].strip().casefold() == hedef_ad:
+                return firma
+        return firma_dict
 
     def update_firma(self, firma_adi: str, guncellemeler: dict) -> dict:
-        firmalar, _ = self.sync_all()
+        firmalar, _ = self.sync_all(kaydet=False)
         hedef = self.get_firma_by_name(firma_adi)
         if not hedef:
             raise ValueError("Firma bulunamadi.")
@@ -440,14 +479,13 @@ class CashflowService:
                 hedef = firma
                 break
 
-        _, faturalar = self.sync_all()
+        _, faturalar = self.sync_all(kaydet=False)
         for fatura in faturalar:
             if fatura["firma_id"] == hedef["firma_id"]:
                 fatura["firma_adi"] = hedef["firma_adi"]
+                self._store_upsert_fatura(fatura)
 
-        self.store.save_firmalar(firmalar)
-        self.store.save_faturalar(faturalar)
-        self.sync_all()
+        self._store_upsert_firma(hedef)
         return hedef
 
     def get_genel_ozet(self) -> dict:
@@ -636,7 +674,7 @@ class CashflowService:
         }
 
     def get_fatura_by_no(self, fatura_no: str) -> dict | None:
-        firmalar, faturalar = self.sync_all()
+        firmalar, faturalar = self.sync_all(kaydet=False)
         firma_periyot_haritasi = self._firma_periyot_haritasi(firmalar)
         hedef = fatura_no.strip()
         for fatura in faturalar:
@@ -661,8 +699,8 @@ class CashflowService:
         odeme_periyodu_gun: int | None = None,
         yon: str = "GIDER",
     ) -> dict:
-        self.sync_all()
-        firma = self.get_firma_by_name(firma_adi)
+        self.sync_all(kaydet=False)
+        firma = self.get_firma_by_name(firma_adi, kaydet=False)
         if not firma:
             yon_upper = (yon or "GIDER").upper()
             if yon_upper not in {"GIDER", "GELIR"}:
@@ -684,7 +722,7 @@ class CashflowService:
         if odeme_periyodu_gun is not None:
             periyot = self._periyot_normalize(int(odeme_periyodu_gun))
             self.update_firma(firma_adi, {"odeme_periyodu_gun": periyot})
-            firma = self.get_firma_by_name(firma_adi) or firma
+            firma = self.get_firma_by_name(firma_adi, kaydet=False) or firma
 
         bugun = date.today().isoformat()
         if not vade_tarihi:
@@ -692,7 +730,7 @@ class CashflowService:
 
         periyot = self._periyot_normalize(int(firma.get("odeme_periyodu_gun", 30)))
 
-        _, faturalar = self.sync_all()
+        _, faturalar = self.sync_all(kaydet=False)
         yeni_id = max((x["fatura_id"] for x in faturalar), default=0) + 1
         yil = date.today().year
         mevcut_nolar = {x["fatura_no"] for x in faturalar}
@@ -736,8 +774,7 @@ class CashflowService:
             ],
         }
         faturalar.append(fatura_dict)
-        self.store.save_faturalar(faturalar)
-        self.sync_all()
+        self._store_upsert_fatura(fatura_dict)
         sonuc = self.get_fatura_by_no(fatura_no)
         return sonuc or fatura_dict
 
@@ -746,7 +783,7 @@ class CashflowService:
         if durum not in {"BEKLIYOR", "GECIKTI", "ODENDI", "IPTAL"}:
             raise ValueError("Gecersiz durum.")
 
-        _, faturalar = self.sync_all()
+        _, faturalar = self.sync_all(kaydet=False)
         hedef = None
         for fatura in faturalar:
             if fatura["fatura_no"] == fatura_no:
@@ -781,8 +818,7 @@ class CashflowService:
                 f"Durum {eski_durum} → {durum} olarak değiştirildi.",
             )
 
-        self.store.save_faturalar(faturalar)
-        self.sync_all()
+        self._store_upsert_fatura(hedef)
         return self.get_fatura_by_no(fatura_no) or hedef
 
     def odeme_kaydet(
@@ -793,7 +829,7 @@ class CashflowService:
         kanal: str = "",
         notlar: str = "",
     ) -> dict:
-        _, faturalar = self.sync_all()
+        _, faturalar = self.sync_all(kaydet=False)
         hedef = None
         for fatura in faturalar:
             if fatura["fatura_no"] == fatura_no:
@@ -851,12 +887,11 @@ class CashflowService:
                 odeme_tarihi,
             )
 
-        self.store.save_faturalar(faturalar)
-        self.sync_all()
+        self._store_upsert_fatura(hedef)
         return self.get_fatura_by_no(fatura_no) or hedef
 
     def fatura_arsivle(self, fatura_no: str) -> dict:
-        _, faturalar = self.sync_all()
+        _, faturalar = self.sync_all(kaydet=False)
         hedef = None
         for fatura in faturalar:
             if fatura["fatura_no"] == fatura_no:
@@ -867,14 +902,11 @@ class CashflowService:
         hedef["arsiv_mi"] = True
         hedef["guncelleme_tarihi"] = date.today().isoformat()
         self._gecmis_ekle(hedef, "Arşivlendi", "Fatura arşive alındı.")
-        self.store.save_faturalar(faturalar)
-        self.sync_all()
+        self._store_upsert_fatura(hedef)
         return hedef
 
     def fatura_sil(self, fatura_no: str) -> None:
-        _, faturalar = self.sync_all()
-        yeni_liste = [x for x in faturalar if x["fatura_no"] != fatura_no]
-        if len(yeni_liste) == len(faturalar):
+        _, faturalar = self.sync_all(kaydet=False)
+        if not any(x["fatura_no"] == fatura_no for x in faturalar):
             raise ValueError("Fatura bulunamadi.")
-        self.store.save_faturalar(yeni_liste)
-        self.sync_all()
+        self._store_delete_fatura(fatura_no)

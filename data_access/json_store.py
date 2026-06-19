@@ -26,6 +26,11 @@ class JsonStore:
                 "varsayilan_vade_gunu": 30,
                 "bildirim_gun_siniri": 10,
                 "otomatik_gecikti": True,
+                "varsayilan_dashboard_periyodu": 30,
+                "varsayilan_firma_yon": "GIDER",
+                "varsayilan_kategori": "genel",
+                "jwt_oturum_suresi_gun": 1,
+                "mevcut_kasa_bakiyesi": 0.0,
             },
         )
 

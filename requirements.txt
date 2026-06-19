@@ -2,3 +2,5 @@ fastapi
 uvicorn
 pyjwt
 bcrypt
+supabase
+python-dotenv
