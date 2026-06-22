@@ -1,4 +1,4 @@
--- LiraFlow Supabase şeması
+-- LiraFlow Supabase şeması (Adjust modu)
 -- Supabase Dashboard → SQL Editor → bu dosyayı çalıştırın
 
 CREATE TABLE IF NOT EXISTS firmalar (
@@ -10,7 +10,6 @@ CREATE TABLE IF NOT EXISTS firmalar (
   vergi_no TEXT NOT NULL DEFAULT '',
   adres TEXT NOT NULL DEFAULT '',
   aktif_mi BOOLEAN NOT NULL DEFAULT TRUE,
-  odeme_periyodu_gun INTEGER NOT NULL DEFAULT 30,
   varsayilan_yon TEXT NOT NULL DEFAULT 'GIDER',
   notlar TEXT NOT NULL DEFAULT '',
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
@@ -19,34 +18,6 @@ CREATE TABLE IF NOT EXISTS firmalar (
 
 CREATE UNIQUE INDEX IF NOT EXISTS firmalar_firma_adi_lower_idx
   ON firmalar (LOWER(TRIM(firma_adi)));
-
-CREATE TABLE IF NOT EXISTS faturalar (
-  fatura_id BIGINT PRIMARY KEY,
-  firma_id BIGINT NOT NULL REFERENCES firmalar(firma_id) ON DELETE CASCADE,
-  firma_adi TEXT NOT NULL DEFAULT '',
-  fatura_no TEXT NOT NULL UNIQUE,
-  tutar NUMERIC(14, 2) NOT NULL,
-  para_birimi TEXT NOT NULL DEFAULT 'TRY',
-  vade_tarihi DATE NOT NULL,
-  durum TEXT NOT NULL,
-  notlar TEXT NOT NULL DEFAULT '',
-  olusturma_tarihi DATE,
-  guncelleme_tarihi DATE,
-  odeme_tarihi DATE,
-  arsiv_mi BOOLEAN NOT NULL DEFAULT FALSE,
-  kategori TEXT NOT NULL DEFAULT 'genel',
-  oncelik TEXT NOT NULL DEFAULT 'orta',
-  yon TEXT NOT NULL DEFAULT 'GIDER',
-  odenen_tutar NUMERIC(14, 2) NOT NULL DEFAULT 0,
-  tahsilat_gecmisi JSONB NOT NULL DEFAULT '[]'::jsonb,
-  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
-);
-
-CREATE INDEX IF NOT EXISTS faturalar_firma_id_idx ON faturalar (firma_id);
-CREATE INDEX IF NOT EXISTS faturalar_durum_idx ON faturalar (durum);
-CREATE INDEX IF NOT EXISTS faturalar_vade_tarihi_idx ON faturalar (vade_tarihi);
-CREATE INDEX IF NOT EXISTS faturalar_yon_idx ON faturalar (yon);
 
 CREATE TABLE IF NOT EXISTS ayarlar (
   id SMALLINT PRIMARY KEY DEFAULT 1 CHECK (id = 1),
@@ -60,14 +31,11 @@ VALUES (
   '{
     "kullanici_adi": "Abdurrahman Koçak",
     "kullanici_unvan": "Yönetici",
-    "varsayilan_odeme_periyodu": 30,
-    "varsayilan_vade_gunu": 30,
-    "bildirim_gun_siniri": 10,
-    "otomatik_gecikti": true,
     "mevcut_kasa_bakiyesi": 0,
     "varsayilan_dashboard_periyodu": 30,
-    "varsayilan_firma_yon": "GIDER",
-    "varsayilan_kategori": "genel",
+    "adjust_sync_gun": 90,
+    "adjust_son_sync": null,
+    "veri_kaynagi": "adjust",
     "jwt_oturum_suresi_gun": 1
   }'::jsonb
 )
@@ -82,9 +50,30 @@ CREATE TABLE IF NOT EXISTS kullanicilar (
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
--- Backend service_role key RLS'i bypass eder.
--- Publishable/anon key ile bağlanacaksanız fix_rls.sql dosyasını çalıştırın.
+CREATE TABLE IF NOT EXISTS adjust_hareketler (
+  hareket_id BIGINT PRIMARY KEY,
+  adjust_key TEXT NOT NULL UNIQUE,
+  partner_adi TEXT NOT NULL,
+  firma_id BIGINT REFERENCES firmalar(firma_id) ON DELETE SET NULL,
+  firma_adi TEXT NOT NULL DEFAULT '',
+  kampanya TEXT NOT NULL DEFAULT '',
+  app_adi TEXT NOT NULL DEFAULT '',
+  tarih DATE NOT NULL,
+  yon TEXT NOT NULL,
+  tutar NUMERIC(14, 2) NOT NULL,
+  para_birimi TEXT NOT NULL DEFAULT 'USD',
+  metrik TEXT NOT NULL DEFAULT '',
+  installs INTEGER,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS adjust_hareketler_tarih_idx ON adjust_hareketler (tarih);
+CREATE INDEX IF NOT EXISTS adjust_hareketler_yon_idx ON adjust_hareketler (yon);
+CREATE INDEX IF NOT EXISTS adjust_hareketler_partner_idx ON adjust_hareketler (partner_adi);
+CREATE INDEX IF NOT EXISTS adjust_hareketler_firma_id_idx ON adjust_hareketler (firma_id);
+
 ALTER TABLE firmalar DISABLE ROW LEVEL SECURITY;
-ALTER TABLE faturalar DISABLE ROW LEVEL SECURITY;
 ALTER TABLE ayarlar DISABLE ROW LEVEL SECURITY;
 ALTER TABLE kullanicilar DISABLE ROW LEVEL SECURITY;
+ALTER TABLE adjust_hareketler DISABLE ROW LEVEL SECURITY;

@@ -18,8 +18,8 @@ body { font-family: Inter, sans-serif; }
 <p class="px-6 text-sm text-white/60 mb-8">Nakit Akışı Yönetimi</p>
 <nav class="flex-1 px-4 space-y-1">
 <a href="/" class="flex items-center gap-3 px-4 py-2 rounded-lg hover:bg-white/10">Panel</a>
-<a href="/firmalar" class="flex items-center gap-3 px-4 py-2 rounded-lg hover:bg-white/10">Firmalar</a>
-<a href="/faturalar" class="flex items-center gap-3 px-4 py-2 rounded-lg hover:bg-white/10">Faturalar</a>
+<a href="/firmalar" class="flex items-center gap-3 px-4 py-2 rounded-lg hover:bg-white/10">Partnerler</a>
+<a href="/harcamalar" class="flex items-center gap-3 px-4 py-2 rounded-lg hover:bg-white/10">Harcamalar</a>
 </nav>
 </aside>
 <header class="fixed top-0 right-0 w-[calc(100%-280px)] h-16 bg-white border-b border-gray-200 flex justify-end items-center px-8 z-40">
@@ -69,24 +69,19 @@ Ayarlar
 <input id="kullanici_unvan" class="w-full border rounded-lg px-3 py-2" type="text"/>
 </div>
 <div>
-<label class="block text-sm font-semibold mb-1">Mevcut Kasa Bakiyesi (TRY)</label>
+<label class="block text-sm font-semibold mb-1">Mevcut Kasa Bakiyesi</label>
 <input id="mevcut_kasa_bakiyesi" class="w-full border rounded-lg px-3 py-2" type="number" min="0" step="1000"/>
-<p class="text-xs text-gray-500 mt-1">Paneldeki "bulmam gereken para" hesabında kullanılır</p>
+<p class="text-xs text-gray-500 mt-1">Dashboard net nakit hesabında kullanılır</p>
 </div>
 <div>
-<label class="block text-sm font-semibold mb-1">Varsayılan Ödeme Periyodu (gün)</label>
-<input type="number" min="1" max="365" step="1" id="varsayilan_odeme_periyodu" class="w-full border rounded-lg px-3 py-2" value="30"/>
-<p class="text-xs text-gray-500 mt-1">Yeni firmalar için ödeme sıklığı (örn. 7, 15, 30)</p>
+<label class="block text-sm font-semibold mb-1">Varsayılan Dashboard Periyodu (gün)</label>
+<input type="number" min="1" max="365" step="1" id="varsayilan_dashboard_periyodu" class="w-full border rounded-lg px-3 py-2" value="30"/>
 </div>
 <div>
-<label class="block text-sm font-semibold mb-1">Bildirim Süresi (gün)</label>
-<input id="bildirim_gun_siniri" class="w-full border rounded-lg px-3 py-2" type="number" min="1" max="60"/>
-<p class="text-xs text-gray-500 mt-1">Vadesi bu kadar gün içinde olan faturalar bildirilir</p>
+<label class="block text-sm font-semibold mb-1">Adjust Senkron Gün Sayısı</label>
+<input type="number" min="1" max="365" step="1" id="adjust_sync_gun" class="w-full border rounded-lg px-3 py-2" value="90"/>
+<p class="text-xs text-gray-500 mt-1">Adjust'tan kaç günlük veri çekileceği</p>
 </div>
-<label class="flex items-center gap-3 cursor-pointer">
-<input id="otomatik_gecikti" type="checkbox" class="w-5 h-5"/>
-<span class="text-sm font-semibold">Vadesi geçen faturaları otomatik "Gecikti" yap</span>
-</label>
 <button type="submit" class="bg-[#091426] text-white px-6 py-2 rounded-lg font-semibold hover:opacity-90">Kaydet</button>
 </form>
 </main>

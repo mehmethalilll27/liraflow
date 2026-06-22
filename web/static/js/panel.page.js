@@ -18,45 +18,9 @@ function panelUyariAcikAyarla(acik) {
   }
 }
 
-function panelUyariSatirCiz(f, gecikmis) {
-  const metin = Utils.kalanGunMetin(f.kalan_gun, f.durum);
-  const sinif = gecikmis
-    ? "border-error/30 bg-error-container text-error"
-    : "border-error/20 bg-error-container/50 text-on-error-container";
-  const ikon = gecikmis ? "warning" : "schedule";
-  return `
-    <a href="${Utils.faturaDetayUrl(f.fatura_no)}" class="flex items-center gap-sm px-md py-sm rounded-lg border ${sinif} text-sm font-semibold hover:brightness-95 transition-all">
-      <span class="material-symbols-outlined text-md">${ikon}</span>
-      <span><b>${f.fatura_no}</b> — ${f.firma_adi} — ${metin}</span>
-    </a>
-  `;
-}
-
 async function panelBildirimleriYukle() {
   const kutu = document.getElementById("panel-uyari-kutusu");
-  if (!kutu) return;
-
-  if (sessionStorage.getItem(PANEL_UYARI_KAPALI) === "1") {
-    kutu.classList.add("hidden");
-    return;
-  }
-
-  const data = await BildirimService.listele();
-  if (!data.toplam) {
-    kutu.classList.add("hidden");
-    return;
-  }
-
-  document.getElementById("panel-uyari-sayi").textContent = String(data.toplam);
-  const satirlar = [];
-  data.geciken.forEach((f) => satirlar.push(panelUyariSatirCiz(f, true)));
-  data.yaklasan.forEach((f) => satirlar.push(panelUyariSatirCiz(f, false)));
-
-  document.getElementById("panel-uyari-icerik").innerHTML = satirlar.join("");
-  kutu.classList.remove("hidden");
-
-  const acik = sessionStorage.getItem(PANEL_UYARI_ACIK) !== "0";
-  panelUyariAcikAyarla(acik);
+  if (kutu) kutu.classList.add("hidden");
 }
 
 function panelUyariBagla() {
@@ -84,12 +48,12 @@ function donemButonSinifi(secili) {
 }
 
 function tabloSatirCiz(f) {
-  const gecikmeSinif = f.durum === "GECIKTI" ? "text-error" : "text-on-surface-variant";
+  const adet = f.hareket_adedi ? ` · ${f.hareket_adedi} hareket` : "";
   return `
-    <tr class="hover:bg-surface-container-low transition-colors cursor-pointer" data-fatura-no="${f.fatura_no}">
+    <tr class="hover:bg-surface-container-low transition-colors">
       <td class="px-lg py-md font-body-md text-body-md font-semibold text-on-surface">${f.firma_adi}</td>
       <td class="px-lg py-md font-mono-data text-mono-data text-right font-bold">${Utils.formatTRY(f.tutar, f.para_birimi)}</td>
-      <td class="px-lg py-md font-body-md text-body-md ${gecikmeSinif}">${Utils.formatTarih(f.vade_tarihi)} · ${Utils.kalanGunMetin(f.kalan_gun, f.durum)}</td>
+      <td class="px-lg py-md font-body-md text-body-md text-on-surface-variant">${Utils.formatTarih(f.tarih)}${adet}</td>
     </tr>
   `;
 }
@@ -102,21 +66,21 @@ function hareketSatirCiz(h) {
   const gelir = h.yon === "GELIR";
   const sinif = gelir ? "text-secondary" : "text-error";
   const ikon = gelir ? "south_west" : "north_east";
-  const etiket = gelir ? "Tahsilat" : "Ödeme";
+  const etiket = gelir ? "Gelir" : "Harcama";
+  const kampanya = h.kampanya ? ` · ${h.kampanya}` : "";
   return `
-    <a href="${Utils.faturaDetayUrl(h.fatura_no)}" class="flex items-center justify-between px-lg py-md hover:bg-surface-container-low transition-colors">
+    <div class="flex items-center justify-between px-lg py-md hover:bg-surface-container-low transition-colors">
       <div class="flex items-center gap-md min-w-0">
         <span class="material-symbols-outlined ${sinif}">${ikon}</span>
         <div class="min-w-0">
           <p class="font-body-md text-body-md font-semibold text-on-surface truncate">${h.firma_adi}</p>
-          <p class="text-xs text-on-surface-variant">${etiket} · ${h.fatura_no} · ${Utils.kalanGunMetin(h.kalan_gun, h.durum)}</p>
+          <p class="text-xs text-on-surface-variant">${etiket}${kampanya} · ${Utils.formatTarih(h.tarih)}</p>
         </div>
       </div>
       <div class="text-right shrink-0 ml-md">
         <p class="font-mono-data font-bold ${sinif}">${Utils.formatTRY(h.tutar, h.para_birimi)}</p>
-        <p class="text-xs text-on-surface-variant">${Utils.formatTarih(h.vade_tarihi)}</p>
       </div>
-    </a>
+    </div>
   `;
 }
 
@@ -136,59 +100,44 @@ function dashboardRender(d) {
 
   const { gelen, giden } = d;
   const donem = d.donem_gun || 30;
-  const gelenDonem = gelen.donem_toplam ?? gelen.bekleyen_toplam;
-  const gidenDonem = giden.donem_toplam ?? giden.bekleyen_toplam;
+  const pb = d.para_birimi || "USD";
+  const gelenDonem = gelen.donem_toplam ?? 0;
+  const gidenDonem = giden.donem_toplam ?? 0;
 
-  metinAyarla("dash-gelen-toplam", Utils.formatTRY(gelenDonem));
-  const gelenAltParca = [`${donem} gün · henüz kasada değil`, `${gelen.donem_adedi ?? gelen.bekleyen_adedi} açık fatura`];
-  if ((gelen.donem_geciken_adedi ?? gelen.geciken_adedi) > 0) {
-    gelenAltParca.push(`${gelen.donem_geciken_adedi ?? gelen.geciken_adedi} gecikmiş`);
-  }
-  if (gelen.donem_ici_adedi > 0) {
-    gelenAltParca.push(`${Utils.formatTRY(gelen.donem_ici)} vadeli`);
-  }
-  metinAyarla("dash-gelen-alt", gelenAltParca.join(" · "));
+  metinAyarla("dash-gelen-toplam", Utils.formatTRY(gelenDonem, pb));
+  metinAyarla(
+    "dash-gelen-alt",
+    `${donem} gün · ${gelen.donem_adedi ?? 0} kayıt · ${gelen.partner_adedi ?? 0} partner`
+  );
 
-  metinAyarla("dash-giden-toplam", Utils.formatTRY(gidenDonem));
-  const gidenAltParca = [`${donem} gün · henüz ödenmedi`, `${giden.donem_adedi ?? giden.bekleyen_adedi} açık fatura`];
-  if ((giden.donem_geciken_adedi ?? giden.geciken_adedi) > 0) {
-    gidenAltParca.push(`${Utils.formatTRY(giden.donem_geciken)} gecikmiş`);
-  }
-  if (giden.donem_ici_adedi > 0) {
-    gidenAltParca.push(`${Utils.formatTRY(giden.donem_ici)} vadeli`);
-  }
-  metinAyarla("dash-giden-alt", gidenAltParca.join(" · "));
+  metinAyarla("dash-giden-toplam", Utils.formatTRY(gidenDonem, pb));
+  metinAyarla(
+    "dash-giden-alt",
+    `${donem} gün · ${giden.donem_adedi ?? 0} kayıt · ${giden.partner_adedi ?? 0} partner`
+  );
 
   const bulKart = el("dash-bul-kart");
   const bulToplam = el("dash-bul-toplam");
   const bulAlt = el("dash-bul-alt");
 
   if (bulToplam && bulAlt) {
-    if (d.bulunmasi_gereken > 0) {
-      bulToplam.textContent = Utils.formatTRY(d.bulunmasi_gereken);
-      bulAlt.textContent = `${donem} gün nakit açığı (giden − gelen − kasa). Ödeme yapınca kasa ve giden birlikte düşer; bu rakam çoğu zaman değişmez.`;
-      if (bulKart) {
-        bulKart.classList.remove("bg-secondary-container");
-        bulKart.classList.add("bg-primary");
-      }
-    } else {
-      const fazla = Math.abs(d.net_durum);
-      bulToplam.textContent = fazla > 0 ? Utils.formatTRY(fazla) : Utils.formatTRY(0);
-      bulAlt.textContent =
-        d.net_durum >= 0 ? "Yeterli nakit var — ek para bulmanıza gerek yok" : "Nakit dengeniz yeterli";
-      if (bulKart) bulKart.classList.remove("bg-error-container");
+    bulToplam.textContent = Utils.formatTRY(d.net_durum, pb);
+    bulAlt.textContent = `Kasa ${Utils.formatTRY(d.mevcut_kasa, pb)} dahil · ${donem} günlük dönem`;
+    if (bulKart) {
+      bulKart.classList.toggle("bg-error-container", d.net_durum < 0);
+      bulKart.classList.toggle("bg-primary", d.net_durum >= 0);
     }
   }
 
-  metinAyarla("dash-kasa", Utils.formatTRY(d.mevcut_kasa));
+  metinAyarla("dash-kasa", Utils.formatTRY(d.mevcut_kasa, pb));
 
   const netEl = el("dash-net-durum");
   if (netEl) {
     if (d.net_durum >= 0) {
-      netEl.textContent = `+${Utils.formatTRY(d.net_durum)} fazla`;
+      netEl.textContent = `+${Utils.formatTRY(d.net_durum, pb)}`;
       netEl.className = "text-xs font-semibold text-secondary";
     } else {
-      netEl.textContent = `${Utils.formatTRY(Math.abs(d.net_durum))} açık`;
+      netEl.textContent = Utils.formatTRY(d.net_durum, pb);
       netEl.className = "text-xs font-semibold text-error";
     }
   }
@@ -200,44 +149,54 @@ function dashboardRender(d) {
   const barGiden = el("dash-bar-giden");
   if (barGelen) barGelen.style.width = `${gelenYuzde}%`;
   if (barGiden) barGiden.style.width = `${gidenYuzde}%`;
-  metinAyarla("dash-bar-gelen-etiket", `Tahsil edilecek ${Utils.formatTRY(gelenDonem)}`);
-  metinAyarla("dash-bar-giden-etiket", `Ödenecek ${Utils.formatTRY(gidenDonem)}`);
+  metinAyarla("dash-bar-gelen-etiket", `Gelir ${Utils.formatTRY(gelenDonem, pb)}`);
+  metinAyarla("dash-bar-giden-etiket", `Harcama ${Utils.formatTRY(gidenDonem, pb)}`);
 
   const hareketler = d.yaklasan_hareketler || [];
-  metinAyarla("dash-hareket-sayi", `${hareketler.length} hareket · ${d.donem_gun} gün`);
+  metinAyarla("dash-hareket-sayi", `${hareketler.length} hareket · son ${d.donem_gun} gün`);
   const hareketListe = el("dash-hareket-liste");
   if (hareketListe) {
     hareketListe.innerHTML = hareketler.length
       ? hareketler.map(hareketSatirCiz).join("")
-      : `<p class="px-lg py-lg text-center text-on-surface-variant text-sm">Bu dönemde yaklaşan hareket yok.</p>`;
+      : `<p class="px-lg py-lg text-center text-on-surface-variant text-sm">Henüz veri yok. Adjust'tan senkronize edin.</p>`;
   }
 
   const odemeBody = el("dash-odeme-body");
   if (odemeBody) {
     odemeBody.innerHTML = d.yaklasan_odemeler.length
       ? d.yaklasan_odemeler.map(tabloSatirCiz).join("")
-      : bosTabloMesaji("Yaklaşan ödeme yok");
+      : bosTabloMesaji("Bu dönemde harcama yok");
   }
 
   const tahsilatBody = el("dash-tahsilat-body");
   if (tahsilatBody) {
     tahsilatBody.innerHTML = d.yaklasan_tahsilatlar.length
       ? d.yaklasan_tahsilatlar.map(tabloSatirCiz).join("")
-      : bosTabloMesaji("Yaklaşan tahsilat yok");
+      : bosTabloMesaji("Bu dönemde gelir yok");
   }
 }
 
-function tabloTiklamaBagla() {
-  ["dash-odeme-body", "dash-tahsilat-body"].forEach((id) => {
-    const el = document.getElementById(id);
-    if (!el) return;
-    el.addEventListener("click", (e) => {
-      const satir = e.target.closest("[data-fatura-no]");
-      if (satir) {
-        window.location.href = Utils.faturaDetayUrl(satir.getAttribute("data-fatura-no"));
-      }
-    });
-  });
+async function syncDurumGuncelle() {
+  const el = document.getElementById("panel-sync-durum");
+  if (!el) return;
+  try {
+    const durum = await AdjustService.durumGetir();
+    if (!durum.tablo_hazir) {
+      el.textContent = durum.tablo_uyari || "Veritabanı tablosu eksik — migrate_adjust.sql çalıştırın";
+      el.classList.add("text-error", "font-semibold");
+      return;
+    }
+    el.classList.remove("text-error", "font-semibold");
+    if (durum.son_sync) {
+      el.textContent = `Son sync: ${new Date(durum.son_sync).toLocaleString("tr-TR")}`;
+    } else if (!durum.yapilandirildi) {
+      el.textContent = "ADJUST_API_TOKEN tanımlayın";
+    } else {
+      el.textContent = "Henüz senkronize edilmedi";
+    }
+  } catch {
+    el.textContent = "";
+  }
 }
 
 async function dashboardYukle() {
@@ -265,22 +224,37 @@ function donemFiltreBagla() {
   });
 }
 
+function adjustSyncBagla() {
+  const btn = document.getElementById("adjust-sync-btn");
+  if (!btn) return;
+  btn.addEventListener("click", async () => {
+    btn.disabled = true;
+    btn.classList.add("opacity-60");
+    try {
+      const sonuc = await AdjustService.senkronize(aktifDonemGun);
+      alert(
+        `Senkron tamamlandı.\n${sonuc.hareket_sayisi} hareket kaydedildi.\nGider: ${Utils.formatTRY(sonuc.gider_toplam, sonuc.para_birimi)}\nGelir: ${Utils.formatTRY(sonuc.gelir_toplam, sonuc.para_birimi)}`
+      );
+      await syncDurumGuncelle();
+      await dashboardYukle();
+    } catch (e) {
+      alert(`Senkron hatası: ${e.message}`);
+    } finally {
+      btn.disabled = false;
+      btn.classList.remove("opacity-60");
+    }
+  });
+}
+
 document.addEventListener("DOMContentLoaded", async () => {
   try {
     await Layout.init();
     panelUyariBagla();
     donemFiltreBagla();
-    tabloTiklamaBagla();
+    adjustSyncBagla();
     await dashboardYukle();
+    await syncDurumGuncelle();
     await panelBildirimleriYukle();
-
-    const yeniBtn = document.getElementById("yeni-fatura-btn");
-    if (yeniBtn) {
-      yeniBtn.addEventListener("click", () => {
-        window.location.href = "/faturalar?yeni=1";
-      });
-    }
-
   } catch (hata) {
     console.error(hata);
     alert(`Veri yüklenemedi: ${hata.message}`);

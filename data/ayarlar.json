@@ -1,9 +1,10 @@
 {
   "kullanici_adi": "Abdurrahman Koçak",
   "kullanici_unvan": "Yönetici",
-  "varsayilan_odeme_periyodu": 30,
-  "bildirim_gun_siniri": 7,
-  "otomatik_gecikti": true,
-  "varsayilan_vade_gunu": 30,
-  "mevcut_kasa_bakiyesi": 81600.0
+  "mevcut_kasa_bakiyesi": 70000.0,
+  "varsayilan_dashboard_periyodu": 30,
+  "adjust_sync_gun": 90,
+  "adjust_son_sync": "2026-06-22",
+  "veri_kaynagi": "adjust",
+  "jwt_oturum_suresi_gun": 1
 }

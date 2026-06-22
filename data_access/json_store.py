@@ -2,6 +2,8 @@ import json
 from pathlib import Path
 from tempfile import NamedTemporaryFile
 
+from data_access.field_maps import DEFAULT_AYARLAR
+
 
 class JsonStore:
     def __init__(self, data_dir: Path | None = None) -> None:
@@ -10,29 +12,14 @@ class JsonStore:
         self.data_dir.mkdir(parents=True, exist_ok=True)
 
         self.firma_path = self.data_dir / "firma_data.json"
-        self.fatura_path = self.data_dir / "fatura_data.json"
         self.ayarlar_path = self.data_dir / "ayarlar.json"
         self.kullanici_path = self.data_dir / "kullanici.json"
+        self.hareket_path = self.data_dir / "adjust_hareketler.json"
 
         self._dosya_yoksa_olustur(self.firma_path, {"firmalar": []})
-        self._dosya_yoksa_olustur(self.fatura_path, {"faturalar": []})
         self._dosya_yoksa_olustur(self.kullanici_path, {"kullanicilar": []})
-        self._dosya_yoksa_olustur(
-            self.ayarlar_path,
-            {
-                "kullanici_adi": "Abdurrahman Koçak",
-                "kullanici_unvan": "Yönetici",
-                "varsayilan_odeme_periyodu": 30,
-                "varsayilan_vade_gunu": 30,
-                "bildirim_gun_siniri": 10,
-                "otomatik_gecikti": True,
-                "varsayilan_dashboard_periyodu": 30,
-                "varsayilan_firma_yon": "GIDER",
-                "varsayilan_kategori": "genel",
-                "jwt_oturum_suresi_gun": 1,
-                "mevcut_kasa_bakiyesi": 0.0,
-            },
-        )
+        self._dosya_yoksa_olustur(self.hareket_path, {"hareketler": []})
+        self._dosya_yoksa_olustur(self.ayarlar_path, dict(DEFAULT_AYARLAR))
 
     def _dosya_yoksa_olustur(self, path: Path, varsayilan_veri: dict) -> None:
         if not path.exists():
@@ -51,17 +38,14 @@ class JsonStore:
     def get_firmalar(self) -> list[dict]:
         return self._json_oku(self.firma_path).get("firmalar", [])
 
-    def get_faturalar(self) -> list[dict]:
-        return self._json_oku(self.fatura_path).get("faturalar", [])
-
     def save_firmalar(self, firmalar: list[dict]) -> None:
         self._json_yaz(self.firma_path, {"firmalar": firmalar})
 
-    def save_faturalar(self, faturalar: list[dict]) -> None:
-        self._json_yaz(self.fatura_path, {"faturalar": faturalar})
-
     def get_ayarlar(self) -> dict:
-        return self._json_oku(self.ayarlar_path)
+        data = self._json_oku(self.ayarlar_path)
+        merged = dict(DEFAULT_AYARLAR)
+        merged.update(data)
+        return merged
 
     def save_ayarlar(self, ayarlar: dict) -> None:
         self._json_yaz(self.ayarlar_path, ayarlar)
@@ -72,3 +56,19 @@ class JsonStore:
     def save_kullanicilar(self, kullanicilar: list[dict]) -> None:
         self._json_yaz(self.kullanici_path, {"kullanicilar": kullanicilar})
 
+    def get_adjust_hareketler(self) -> list[dict]:
+        return self._json_oku(self.hareket_path).get("hareketler", [])
+
+    def upsert_adjust_hareketler(self, hareketler: list[dict]) -> None:
+        mevcut = {h["adjust_key"]: h for h in self.get_adjust_hareketler()}
+        for hareket in hareketler:
+            mevcut[hareket["adjust_key"]] = hareket
+        sirali = sorted(
+            mevcut.values(),
+            key=lambda x: (x.get("tarih", ""), x.get("partner_adi", "")),
+            reverse=True,
+        )
+        self._json_yaz(self.hareket_path, {"hareketler": sirali})
+
+    def adjust_tablo_hazir_mi(self) -> bool:
+        return True

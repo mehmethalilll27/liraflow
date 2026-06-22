@@ -131,11 +131,11 @@
 </a>
 <a class="flex items-center gap-md px-lg py-md text-on-primary-container hover:text-on-primary hover:bg-primary-container/50 transition-colors duration-200" href="/firmalar">
 <span class="material-symbols-outlined" data-icon="business">business</span>
-<span class="font-label-md text-label-md">Firmalar</span>
+<span class="font-label-md text-label-md">Partnerler</span>
 </a>
-<a class="flex items-center gap-md px-lg py-md text-on-primary-container hover:text-on-primary hover:bg-primary-container/50 transition-colors duration-200" href="/faturalar">
-<span class="material-symbols-outlined" data-icon="description">description</span>
-<span class="font-label-md text-label-md">Faturalar</span>
+<a class="flex items-center gap-md px-lg py-md text-on-primary-container hover:text-on-primary hover:bg-primary-container/50 transition-colors duration-200" href="/harcamalar">
+<span class="material-symbols-outlined" data-icon="payments">payments</span>
+<span class="font-label-md text-label-md">Harcamalar</span>
 </a>
 </nav>
 </aside>
@@ -144,7 +144,7 @@
 <div class="flex items-center flex-1 max-w-xl">
 <div class="relative w-full group">
 <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-outline" data-icon="search">search</span>
-<input class="w-full pl-10 pr-4 py-2 bg-surface-container-lowest border border-outline-variant rounded-xl focus:ring-2 focus:ring-primary-container focus:outline-none transition-all font-body-md text-body-md" placeholder="Fatura veya firma ara..." type="text" id="panel-ara"/>
+<input class="w-full pl-10 pr-4 py-2 bg-surface-container-lowest border border-outline-variant rounded-xl focus:ring-2 focus:ring-primary-container focus:outline-none transition-all font-body-md text-body-md" placeholder="Partner veya kampanya ara..." type="text" id="panel-ara"/>
 </div>
 </div>
 <div class="flex items-center gap-lg ml-xl relative shrink-0">
@@ -186,13 +186,16 @@ Ayarlar
 <!-- Page Heading -->
 <div class="mb-xl flex justify-between items-end">
 <div>
-<h2 class="font-headline-lg text-headline-lg text-on-surface">Nakit Dashboard</h2>
-<p class="font-body-md text-body-md text-on-surface-variant">Gelen ve giden paranızı tek bakışta görün; ne kadar para bulmanız gerektiğini hesaplayın.</p>
+<h2 class="font-headline-lg text-headline-lg text-on-surface">Adjust Dashboard</h2>
+<p class="font-body-md text-body-md text-on-surface-variant">Partner bazlı reklam harcaması ve gelir — Adjust'tan otomatik çekilir.</p>
 </div>
-<button type="button" id="yeni-fatura-btn" class="flex items-center gap-xs bg-primary text-on-primary px-lg py-sm rounded-xl font-label-md hover:opacity-90 transition-opacity">
-<span class="material-symbols-outlined !text-[18px]" data-icon="add">add</span>
-                    Yeni Fatura Ekle
+<div class="flex items-center gap-sm">
+<p class="text-xs text-on-surface-variant hidden sm:block" id="panel-sync-durum"></p>
+<button type="button" id="adjust-sync-btn" class="flex items-center gap-xs bg-secondary text-on-secondary px-lg py-sm rounded-xl font-label-md hover:opacity-90 transition-opacity">
+<span class="material-symbols-outlined !text-[18px]" data-icon="sync">sync</span>
+                    Adjust Senkronize
                 </button>
+</div>
 </div>
 <!-- Yaklaşan Bildirimler -->
 <div id="panel-uyari-kutusu" class="hidden mb-lg rounded-xl border border-error/30 bg-error-container/20 overflow-hidden">
@@ -215,7 +218,7 @@ Yaklaşan Bildirimler (<span id="panel-uyari-sayi">0</span>)
 <div class="grid grid-cols-1 md:grid-cols-3 gap-gutter mb-xl">
 <div class="bg-surface-container-lowest p-lg rounded-xl border border-secondary/30 shadow-[0px_1px_3px_rgba(0,0,0,0.05)] hover:shadow-md transition-shadow border-l-4 border-l-secondary">
 <div class="flex items-center justify-between mb-sm">
-<span class="font-label-md text-label-md text-on-surface-variant">Tahsil Edilecek</span>
+<span class="font-label-md text-label-md text-on-surface-variant">Toplam Gelir</span>
 <span class="material-symbols-outlined text-secondary">south_west</span>
 </div>
 <div class="font-headline-md text-headline-md text-secondary" id="dash-gelen-toplam">-</div>
@@ -223,7 +226,7 @@ Yaklaşan Bildirimler (<span id="panel-uyari-sayi">0</span>)
 </div>
 <div class="bg-surface-container-lowest p-lg rounded-xl border border-outline-variant shadow-[0px_1px_3px_rgba(0,0,0,0.05)] hover:shadow-md transition-shadow border-l-4 border-l-error">
 <div class="flex items-center justify-between mb-sm">
-<span class="font-label-md text-label-md text-on-surface-variant">Ödenecek</span>
+<span class="font-label-md text-label-md text-on-surface-variant">Toplam Harcama</span>
 <span class="material-symbols-outlined text-error">north_east</span>
 </div>
 <div class="font-headline-md text-headline-md text-error" id="dash-giden-toplam">-</div>
@@ -231,11 +234,11 @@ Yaklaşan Bildirimler (<span id="panel-uyari-sayi">0</span>)
 </div>
 <div class="bg-primary p-lg rounded-xl shadow-md border border-primary-container" id="dash-bul-kart">
 <div class="flex items-center justify-between mb-sm">
-<span class="font-label-md text-label-md text-on-primary-container">Bulmam Gereken</span>
+<span class="font-label-md text-label-md text-on-primary-container">Net Nakit</span>
 <span class="material-symbols-outlined text-secondary-fixed">account_balance_wallet</span>
 </div>
 <div class="font-headline-md text-headline-md text-on-primary" id="dash-bul-toplam">-</div>
-<p class="mt-sm text-[11px] text-on-primary-container font-medium" id="dash-bul-alt">-</p>
+<p class="text-[11px] text-on-primary-container font-medium" id="dash-bul-alt">Kasa + gelir − harcama</p>
 </div>
 </div>
 <!-- Kasa + Nakit Dengesi -->
@@ -243,7 +246,7 @@ Yaklaşan Bildirimler (<span id="panel-uyari-sayi">0</span>)
 <div class="bg-surface-container-lowest p-lg rounded-xl border border-outline-variant">
 <p class="font-label-md text-label-md text-on-surface-variant mb-xs">Mevcut Kasa</p>
 <div class="font-headline-md text-headline-md text-on-surface" id="dash-kasa">-</div>
-<p class="text-[11px] text-on-surface-variant mt-xs">Elindeki nakit. Tahsilat kaydı kasayı artırır, ödeme kaydı düşürür.</p>
+<p class="text-[11px] text-on-surface-variant mt-xs">Eldeki nakit bakiyesi (manuel girilir).</p>
 <a href="/ayarlar" class="text-xs text-primary font-semibold hover:underline mt-sm inline-block">Kasayı düzenle →</a>
 </div>
 <div class="lg:col-span-2 bg-surface-container-lowest p-lg rounded-xl border border-outline-variant">
@@ -264,7 +267,7 @@ Yaklaşan Bildirimler (<span id="panel-uyari-sayi">0</span>)
 <!-- Yaklaşan Hareketler -->
 <div class="bg-surface-container-lowest rounded-xl border border-outline-variant overflow-hidden shadow-sm mb-xl">
 <div class="px-lg py-md border-b border-outline-variant flex justify-between items-center bg-surface">
-<h3 class="font-headline-md text-headline-md text-on-surface">Yaklaşan Hareketler</h3>
+<h3 class="font-headline-md text-headline-md text-on-surface">Son Hareketler</h3>
 <span class="text-xs text-on-surface-variant" id="dash-hareket-sayi">-</span>
 </div>
 <div id="dash-hareket-liste" class="divide-y divide-outline-variant/50 max-h-64 overflow-y-auto"></div>
@@ -273,16 +276,16 @@ Yaklaşan Bildirimler (<span id="panel-uyari-sayi">0</span>)
 <div class="grid grid-cols-1 xl:grid-cols-2 gap-gutter">
 <div class="bg-surface-container-lowest rounded-xl border border-outline-variant overflow-hidden shadow-sm">
 <div class="px-lg py-md border-b border-outline-variant flex justify-between items-center bg-surface">
-<h3 class="font-headline-md text-headline-md text-on-surface">Yaklaşan Ödemeler</h3>
-<a href="/faturalar?yon=GIDER" class="text-primary font-label-md text-label-md hover:underline">Tümünü Gör</a>
+<h3 class="font-headline-md text-headline-md text-on-surface">En Çok Harcama (Partner)</h3>
+<a href="/harcamalar?yon=GIDER" class="text-primary font-label-md text-label-md hover:underline">Tümünü Gör</a>
 </div>
 <div class="overflow-x-auto">
 <table class="w-full text-left border-collapse">
 <thead>
 <tr class="bg-surface-container/30 border-b border-outline-variant">
-<th class="px-lg py-md font-label-md text-label-md text-on-surface-variant uppercase">Firma</th>
+<th class="px-lg py-md font-label-md text-label-md text-on-surface-variant uppercase">Partner</th>
 <th class="px-lg py-md font-label-md text-label-md text-on-surface-variant uppercase text-right">Tutar</th>
-<th class="px-lg py-md font-label-md text-label-md text-on-surface-variant uppercase">Vade</th>
+<th class="px-lg py-md font-label-md text-label-md text-on-surface-variant uppercase">Son Tarih</th>
 </tr>
 </thead>
 <tbody id="dash-odeme-body" class="divide-y divide-outline-variant/50"></tbody>
@@ -291,16 +294,16 @@ Yaklaşan Bildirimler (<span id="panel-uyari-sayi">0</span>)
 </div>
 <div class="bg-surface-container-lowest rounded-xl border border-outline-variant overflow-hidden shadow-sm">
 <div class="px-lg py-md border-b border-outline-variant flex justify-between items-center bg-surface">
-<h3 class="font-headline-md text-headline-md text-on-surface">Yaklaşan Tahsilatlar</h3>
-<a href="/faturalar?yon=GELIR" class="text-primary font-label-md text-label-md hover:underline">Tümünü Gör</a>
+<h3 class="font-headline-md text-headline-md text-on-surface">En Çok Gelir (Partner)</h3>
+<a href="/harcamalar?yon=GELIR" class="text-primary font-label-md text-label-md hover:underline">Tümünü Gör</a>
 </div>
 <div class="overflow-x-auto">
 <table class="w-full text-left border-collapse">
 <thead>
 <tr class="bg-surface-container/30 border-b border-outline-variant">
-<th class="px-lg py-md font-label-md text-label-md text-on-surface-variant uppercase">Firma</th>
+<th class="px-lg py-md font-label-md text-label-md text-on-surface-variant uppercase">Partner</th>
 <th class="px-lg py-md font-label-md text-label-md text-on-surface-variant uppercase text-right">Tutar</th>
-<th class="px-lg py-md font-label-md text-label-md text-on-surface-variant uppercase">Vade</th>
+<th class="px-lg py-md font-label-md text-label-md text-on-surface-variant uppercase">Son Tarih</th>
 </tr>
 </thead>
 <tbody id="dash-tahsilat-body" class="divide-y divide-outline-variant/50"></tbody>
@@ -316,6 +319,7 @@ Yaklaşan Bildirimler (<span id="panel-uyari-sayi">0</span>)
 <script src="/static/js/settingsService.js?v=2"></script>
 <script src="/static/js/authService.js?v=2"></script>
 <script src="/static/js/layout.js?v=3"></script>
-<script src="/static/js/dashboardService.js?v=2"></script>
-<script src="/static/js/panel.page.js?v=6"></script>
+<script src="/static/js/adjustService.js?v=1"></script>
+<script src="/static/js/dashboardService.js?v=3"></script>
+<script src="/static/js/panel.page.js?v=8"></script>
 </body></html>

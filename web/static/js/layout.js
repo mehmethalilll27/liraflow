@@ -34,43 +34,12 @@ const Layout = {
     const ozet = document.getElementById("ozet-bildirim");
     if (!badge && !liste && !ozet) return;
 
-    const data = await BildirimService.listele();
-
-    if (ozet) {
-      ozet.textContent =
-        data.toplam > 0
-          ? `${data.yaklasan.length} yaklaşan, ${data.geciken.length} geciken ödeme`
-          : "Yaklaşan ödeme bildirimi yok";
-    }
-
-    if (!badge || !liste) return;
-
-    if (data.toplam > 0) {
-      badge.textContent = data.toplam;
-      badge.classList.remove("hidden");
-      badge.classList.add("flex");
-    } else {
+    if (ozet) ozet.textContent = "Adjust verileri panelden takip edilir";
+    if (badge) {
       badge.classList.add("hidden");
       badge.classList.remove("flex");
     }
-
-    if (!data.toplam) {
-      liste.innerHTML = "<p>Şu an bildirim yok.</p>";
-      return;
-    }
-
-    const satirlar = [];
-    data.yaklasan.forEach((f) => {
-      satirlar.push(
-        `<a class="block py-1 text-error font-semibold hover:underline" href="${Utils.faturaDetayUrl(f.fatura_no)}">${f.fatura_no} — ${f.firma_adi} — ${Utils.kalanGunMetin(f.kalan_gun, f.durum)}</a>`
-      );
-    });
-    data.geciken.forEach((f) => {
-      satirlar.push(
-        `<a class="block py-1 text-error font-bold hover:underline" href="${Utils.faturaDetayUrl(f.fatura_no)}">${f.fatura_no} — ${f.firma_adi} — ${Utils.kalanGunMetin(f.kalan_gun, f.durum)}</a>`
-      );
-    });
-    liste.innerHTML = satirlar.join("");
+    if (liste) liste.innerHTML = "<p>Bildirim yok — Adjust verileri panelden takip edilir.</p>";
   },
 
   async hesapBilgisiYukle() {
@@ -109,7 +78,7 @@ const Layout = {
       e.preventDefault();
       const arama = panelAra.value.trim();
       if (arama) {
-        window.location.href = `/faturalar?firma=${encodeURIComponent(arama)}`;
+        window.location.href = `/harcamalar?partner=${encodeURIComponent(arama)}`;
       }
     });
   },

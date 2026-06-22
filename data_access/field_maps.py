@@ -8,7 +8,6 @@ FIRMA_PERSISTED_KEYS = frozenset(
         "vergi_no",
         "adres",
         "aktif_mi",
-        "odeme_periyodu_gun",
         "varsayilan_yon",
         "notlar",
     }
@@ -16,44 +15,25 @@ FIRMA_PERSISTED_KEYS = frozenset(
 
 FIRMA_COMPUTED_KEYS = frozenset(
     {
-        "fatura_no_listesi",
+        "toplam_harcama",
+        "toplam_gelir",
         "acik_gider",
         "acik_gelir",
-        "geciken_gider",
-        "geciken_gelir",
-        "odenen_gider",
-        "tahsil_gelir",
         "net_pozisyon",
         "firma_tipi",
-        "son_faturalar",
-        "toplam_borc",
-        "toplam_odenen",
-        "toplam_geciken",
-        "odeme_vadesi_gun",
-        "fatura_id_listesi",
-    }
-)
-
-FATURA_COMPUTED_KEYS = frozenset(
-    {
-        "liste_sira_no",
-        "odeme_sira_no",
-        "tahsilat_sira_no",
-        "kalan_gun",
-        "kalan_tutar",
+        "son_hareketler",
+        "hareket_adedi",
+        "para_birimi",
     }
 )
 
 DEFAULT_AYARLAR: dict = {
     "kullanici_adi": "Abdurrahman Koçak",
     "kullanici_unvan": "Yönetici",
-    "varsayilan_odeme_periyodu": 30,
-    "varsayilan_vade_gunu": 30,
-    "bildirim_gun_siniri": 10,
-    "otomatik_gecikti": True,
     "mevcut_kasa_bakiyesi": 0.0,
     "varsayilan_dashboard_periyodu": 30,
-    "varsayilan_firma_yon": "GIDER",
-    "varsayilan_kategori": "genel",
+    "adjust_sync_gun": 90,
+    "adjust_son_sync": None,
+    "veri_kaynagi": "adjust",
     "jwt_oturum_suresi_gun": 1,
 }

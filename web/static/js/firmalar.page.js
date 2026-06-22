@@ -9,7 +9,6 @@ function filtreDegerleri() {
     arama: (document.getElementById("firma-ara")?.value || "").trim().toLowerCase(),
     tip: document.getElementById("filtre-tip")?.value || "",
     aktif: document.getElementById("filtre-aktif")?.value || "",
-    geciken: document.getElementById("filtre-geciken")?.value || "",
   };
 }
 
@@ -18,24 +17,19 @@ function firmaFiltreUygun(firma, filtre) {
   if (filtre.tip && (firma.firma_tipi || "BOS") !== filtre.tip) return false;
   if (filtre.aktif === "aktif" && firma.aktif_mi === false) return false;
   if (filtre.aktif === "pasif" && firma.aktif_mi !== false) return false;
-  const gecikenToplam = (firma.geciken_gider || 0) + (firma.geciken_gelir || 0);
-  if (filtre.geciken === "evet" && gecikenToplam <= 0) return false;
-  if (filtre.geciken === "hayir" && gecikenToplam > 0) return false;
   return true;
+}
+
+function paraBirimi(firma) {
+  return firma.para_birimi || "USD";
 }
 
 function firmaSatirCiz(firma) {
   const baslik = Utils.firmaBasHarfleri(firma.firma_adi);
   const aktif = firma.aktif_mi !== false;
-  const vadeGun = firma.odeme_periyodu_gun || firma.odeme_vadesi_gun || 30;
   const net = Utils.netPozisyonGoster(firma.net_pozisyon || 0);
-  const gecikenGider = firma.geciken_gider || 0;
-  const gecikenGelir = firma.geciken_gelir || 0;
-  const gecikenMetin =
-    gecikenGider || gecikenGelir
-      ? `<span class="block text-error">${Utils.formatTRY(gecikenGider + gecikenGelir)}</span>
-         <span class="text-xs text-on-surface-variant">Gider ${Utils.formatTRY(gecikenGider)} · Gelir ${Utils.formatTRY(gecikenGelir)}</span>`
-      : `<span class="text-on-surface-variant">—</span>`;
+  const pb = paraBirimi(firma);
+  const hareketAdet = firma.hareket_adedi || 0;
 
   return `
     <tr class="hover:bg-surface-container-low transition-all cursor-pointer group" data-firma-adi="${firma.firma_adi}">
@@ -47,7 +41,7 @@ function firmaSatirCiz(firma) {
               <p class="font-bold text-body-md text-on-surface">${firma.firma_adi}</p>
               ${Utils.firmaTipiEtiketi(firma.firma_tipi || "BOS")}
             </div>
-            <p class="text-label-md text-on-surface-variant">${Utils.periyotEtiketi(vadeGun)}</p>
+            <p class="text-label-md text-on-surface-variant">Adjust partner</p>
           </div>
         </div>
       </td>
@@ -55,10 +49,10 @@ function firmaSatirCiz(firma) {
         <p class="text-body-md text-on-surface">${firma.eposta || "-"}</p>
         <p class="text-label-md text-on-surface-variant">${firma.telefon || "-"}</p>
       </td>
-      <td class="px-xl py-lg font-mono-data text-error text-right font-bold">${Utils.formatTRY(firma.acik_gider || 0)}</td>
-      <td class="px-xl py-lg font-mono-data text-secondary text-right font-bold">${Utils.formatTRY(firma.acik_gelir || 0)}</td>
+      <td class="px-xl py-lg font-mono-data text-error text-right font-bold">${Utils.formatTRY(firma.toplam_harcama || firma.acik_gider || 0, pb)}</td>
+      <td class="px-xl py-lg font-mono-data text-secondary text-right font-bold">${Utils.formatTRY(firma.toplam_gelir || firma.acik_gelir || 0, pb)}</td>
       <td class="px-xl py-lg font-mono-data text-right ${net.sinif}">${net.metin}</td>
-      <td class="px-xl py-lg font-mono-data text-right text-sm">${gecikenMetin}</td>
+      <td class="px-xl py-lg font-mono-data text-right text-on-surface-variant">${hareketAdet}</td>
       <td class="px-xl py-lg">
         <span class="px-3 py-1 rounded-full ${aktif ? "bg-secondary-container/30 text-on-secondary-container" : "bg-outline-variant/30 text-on-surface-variant"} text-label-md font-bold">
           ${aktif ? "Aktif" : "Pasif"}
@@ -66,8 +60,8 @@ function firmaSatirCiz(firma) {
       </td>
       <td class="px-xl py-lg text-center">
         <div class="flex items-center justify-center gap-1">
-          <button type="button" class="p-2 rounded-full hover:bg-surface-container-highest opacity-0 group-hover:opacity-100 transition-opacity" data-faturalar title="Faturaları gör">
-            <span class="material-symbols-outlined text-md">receipt_long</span>
+          <button type="button" class="p-2 rounded-full hover:bg-surface-container-highest opacity-0 group-hover:opacity-100 transition-opacity" data-harcamalar title="Harcamaları gör">
+            <span class="material-symbols-outlined text-md">payments</span>
           </button>
           <button type="button" class="p-2 rounded-full hover:bg-surface-container-highest opacity-0 group-hover:opacity-100 transition-opacity" data-duzenle title="Düzenle">
             <span class="material-symbols-outlined text-md">edit</span>
@@ -79,45 +73,32 @@ function firmaSatirCiz(firma) {
 }
 
 function ustOzetKartlariGuncelle(firmalar) {
-  let acikGider = 0;
-  let acikGelir = 0;
-  let gecikenGider = 0;
-  let gecikenGelir = 0;
+  let harcama = 0;
+  let gelir = 0;
   firmalar.forEach((f) => {
-    acikGider += f.acik_gider || 0;
-    acikGelir += f.acik_gelir || 0;
-    gecikenGider += f.geciken_gider || 0;
-    gecikenGelir += f.geciken_gelir || 0;
+    harcama += f.toplam_harcama || f.acik_gider || 0;
+    gelir += f.toplam_gelir || f.acik_gelir || 0;
   });
-  const net = acikGelir - acikGider;
-  const gecikenToplam = gecikenGider + gecikenGelir;
+  const net = gelir - harcama;
 
   const giderEl = document.getElementById("ozet-acik-gider");
   const gelirEl = document.getElementById("ozet-acik-gelir");
   const netEl = document.getElementById("ozet-net-pozisyon");
-  const gecikenEl = document.getElementById("ozet-geciken-toplam");
+  const partnerEl = document.getElementById("ozet-partner-sayisi");
 
-  if (giderEl) giderEl.textContent = Utils.formatTRY(acikGider);
-  if (gelirEl) gelirEl.textContent = Utils.formatTRY(acikGelir);
+  if (giderEl) giderEl.textContent = Utils.formatTRY(harcama, "USD");
+  if (gelirEl) gelirEl.textContent = Utils.formatTRY(gelir, "USD");
   if (netEl) {
     const n = Utils.netPozisyonGoster(net);
     netEl.textContent = n.metin;
     netEl.className = `font-headline-md text-headline-md font-bold mt-sm ${n.sinif}`;
   }
-  if (gecikenEl) gecikenEl.textContent = Utils.formatTRY(gecikenToplam);
-
-  const gecikenAlt = document.getElementById("ozet-geciken-alt");
-  if (gecikenAlt) {
-    gecikenAlt.textContent =
-      gecikenToplam > 0
-        ? `Gider ${Utils.formatTRY(gecikenGider)} · Gelir ${Utils.formatTRY(gecikenGelir)}`
-        : "Geciken fatura yok";
-  }
+  if (partnerEl) partnerEl.textContent = String(firmalar.length);
 
   const sayac = document.getElementById("firma-sayac");
   if (sayac) {
     const toplamSayfa = Math.max(1, Math.ceil(firmalar.length / FIRMA_SAYFA_BASINA));
-    sayac.textContent = `${firmalar.length} firma listeleniyor · Sayfa ${firmaSayfa}/${toplamSayfa}`;
+    sayac.textContent = `${firmalar.length} partner listeleniyor · Sayfa ${firmaSayfa}/${toplamSayfa}`;
   }
 }
 
@@ -156,7 +137,7 @@ function firmaSayfalamaCiz() {
 function tabloyuCiz(firmalar) {
   const body = document.getElementById("firma-tablo-body");
   if (!firmalar.length) {
-    body.innerHTML = `<tr><td colspan="8" class="px-xl py-lg text-center text-on-surface-variant">Kayıt bulunamadı.</td></tr>`;
+    body.innerHTML = `<tr><td colspan="8" class="px-xl py-lg text-center text-on-surface-variant">Partner bulunamadı. Adjust senkronu sonrası otomatik eklenir.</td></tr>`;
     firmaSayfalamaCiz();
     return;
   }
@@ -168,29 +149,33 @@ function tabloyuCiz(firmalar) {
 
 function drawerFinansGuncelle(firma) {
   const ozetKutu = document.getElementById("drawerFinansOzet");
-  const sonKutu = document.getElementById("drawerSonFaturalar");
+  const sonKutu = document.getElementById("drawerSonHareketler");
   if (!firma || !ozetKutu) return;
 
+  const pb = paraBirimi(firma);
   ozetKutu.classList.remove("hidden");
-  document.getElementById("drawerAcikGider").textContent = Utils.formatTRY(firma.acik_gider || 0);
-  document.getElementById("drawerAcikGelir").textContent = Utils.formatTRY(firma.acik_gelir || 0);
+  document.getElementById("drawerAcikGider").textContent = Utils.formatTRY(
+    firma.toplam_harcama || firma.acik_gider || 0,
+    pb
+  );
+  document.getElementById("drawerAcikGelir").textContent = Utils.formatTRY(
+    firma.toplam_gelir || firma.acik_gelir || 0,
+    pb
+  );
   const net = Utils.netPozisyonGoster(firma.net_pozisyon || 0);
   const netEl = document.getElementById("drawerNet");
   netEl.textContent = net.metin;
   netEl.className = `font-mono-data font-bold ${net.sinif}`;
-  const geciken = (firma.geciken_gider || 0) + (firma.geciken_gelir || 0);
-  document.getElementById("drawerGeciken").textContent = Utils.formatTRY(geciken);
+  document.getElementById("drawerGeciken").textContent = String(firma.hareket_adedi || 0);
 
-  const linkler = document.getElementById("drawerFaturaLinkleri");
+  const linkler = document.getElementById("drawerHareketLinkleri");
   const enc = encodeURIComponent(firma.firma_adi);
   linkler.innerHTML = `
-    <a href="/faturalar?firma=${enc}" class="text-xs font-semibold text-primary hover:underline">Tüm faturalar</a>
-    <a href="/faturalar?firma=${enc}&yon=GIDER&yeni=1" class="text-xs font-semibold text-error hover:underline">+ Gider fatura</a>
-    <a href="/faturalar?firma=${enc}&yon=GELIR&yeni=1" class="text-xs font-semibold text-secondary hover:underline">+ Gelir fatura</a>
+    <a href="/harcamalar?partner=${enc}" class="text-xs font-semibold text-primary hover:underline">Tüm hareketler</a>
   `;
 
-  const liste = document.getElementById("drawerSonFaturalarListe");
-  const son = firma.son_faturalar || [];
+  const liste = document.getElementById("drawerSonHareketlerListe");
+  const son = firma.son_hareketler || [];
   if (!son.length) {
     sonKutu.classList.add("hidden");
     liste.innerHTML = "";
@@ -198,11 +183,11 @@ function drawerFinansGuncelle(firma) {
     sonKutu.classList.remove("hidden");
     liste.innerHTML = son
       .map(
-        (f) => `
-      <a href="${Utils.faturaDetayUrl(f.fatura_no)}" class="flex items-center justify-between py-xs px-sm rounded-lg hover:bg-surface-container-low">
-        <span class="font-semibold text-on-surface">${f.fatura_no} · ${Utils.yonEtiketi(f.yon || "GIDER")}</span>
-        <span class="font-mono-data text-sm">${Utils.formatTRY(f.tutar, f.para_birimi)}</span>
-      </a>`
+        (h) => `
+      <div class="flex items-center justify-between py-xs px-sm rounded-lg bg-surface-container-low/50">
+        <span class="font-semibold text-on-surface">${Utils.formatTarih(h.tarih)} · ${Utils.yonEtiketi(h.yon || "GIDER")}</span>
+        <span class="font-mono-data text-sm">${Utils.formatTRY(h.tutar, h.para_birimi || pb)}</span>
+      </div>`
       )
       .join("");
   }
@@ -216,10 +201,10 @@ function drawerAc(firma = null) {
 
   seciliFirma = firma;
   const ozetKutu = document.getElementById("drawerFinansOzet");
-  const sonKutu = document.getElementById("drawerSonFaturalar");
+  const sonKutu = document.getElementById("drawerSonHareketler");
 
   if (firma) {
-    baslik.textContent = "Firma Düzenle";
+    baslik.textContent = "Partner Düzenle";
     kaydetBtn.textContent = "Kaydet";
     document.getElementById("drawerFirmaId").textContent = `ID: #${firma.firma_id} · ${firma.firma_tipi || "BOS"}`;
     document.getElementById("inputFirmaAd").value = firma.firma_adi || "";
@@ -228,12 +213,10 @@ function drawerAc(firma = null) {
     document.getElementById("inputYetkili").value = firma.yetkili_kisi || "";
     document.getElementById("inputVergiNo").value = firma.vergi_no || "";
     document.getElementById("inputAdres").value = firma.adres || "";
-    document.getElementById("inputVadeGun").value = String(firma.odeme_periyodu_gun || firma.odeme_vadesi_gun || 30);
-    document.getElementById("inputVarsayilanYon").value = firma.varsayilan_yon || "GIDER";
     document.getElementById("inputNotlar").value = firma.notlar || "";
     drawerFinansGuncelle(firma);
   } else {
-    baslik.textContent = "Yeni Firma Ekle";
+    baslik.textContent = "Yeni Partner Ekle";
     kaydetBtn.textContent = "Kaydet";
     document.getElementById("drawerFirmaId").textContent = "Yeni kayıt";
     document.getElementById("inputFirmaAd").value = "";
@@ -242,8 +225,6 @@ function drawerAc(firma = null) {
     document.getElementById("inputYetkili").value = "";
     document.getElementById("inputVergiNo").value = "";
     document.getElementById("inputAdres").value = "";
-    document.getElementById("inputVadeGun").value = "30";
-    document.getElementById("inputVarsayilanYon").value = "GIDER";
     document.getElementById("inputNotlar").value = "";
     ozetKutu?.classList.add("hidden");
     sonKutu?.classList.add("hidden");
@@ -275,8 +256,6 @@ function formPayload() {
     yetkili_kisi: document.getElementById("inputYetkili").value.trim(),
     vergi_no: document.getElementById("inputVergiNo").value.trim(),
     adres: document.getElementById("inputAdres").value.trim(),
-    odeme_periyodu_gun: Utils.periyotSinirla(document.getElementById("inputVadeGun").value),
-    varsayilan_yon: document.getElementById("inputVarsayilanYon").value,
     notlar: document.getElementById("inputNotlar").value.trim(),
   };
 }
@@ -284,7 +263,10 @@ function formPayload() {
 function filtreUygula() {
   const filtre = filtreDegerleri();
   filtreliFirmalar = tumFirmalar.filter((f) => firmaFiltreUygun(f, filtre));
-  filtreliFirmalar.sort((a, b) => (b.acik_gider || 0) + (b.acik_gelir || 0) - ((a.acik_gider || 0) + (a.acik_gelir || 0)));
+  filtreliFirmalar.sort(
+    (a, b) =>
+      (b.toplam_harcama || 0) + (b.toplam_gelir || 0) - ((a.toplam_harcama || 0) + (a.toplam_gelir || 0))
+  );
   firmaSayfa = 1;
   ustOzetKartlariGuncelle(filtreliFirmalar);
   tabloyuCiz(filtreliFirmalar);
@@ -294,7 +276,6 @@ function filtreleriTemizle() {
   document.getElementById("firma-ara").value = "";
   document.getElementById("filtre-tip").value = "";
   document.getElementById("filtre-aktif").value = "";
-  document.getElementById("filtre-geciken").value = "";
   filtreUygula();
 }
 
@@ -306,7 +287,7 @@ async function firmalariYukle() {
 async function firmaKaydet() {
   const payload = formPayload();
   if (!payload.firma_adi) {
-    alert("Firma adı zorunludur.");
+    alert("Partner adı zorunludur.");
     return;
   }
 
@@ -320,8 +301,8 @@ async function firmaKaydet() {
   await firmalariYukle();
 }
 
-function faturalaraGit(firmaAdi) {
-  window.location.href = `/faturalar?firma=${encodeURIComponent(firmaAdi)}`;
+function harcamalaraGit(firmaAdi) {
+  window.location.href = `/harcamalar?partner=${encodeURIComponent(firmaAdi)}`;
 }
 
 document.addEventListener("DOMContentLoaded", async () => {
@@ -337,26 +318,23 @@ document.addEventListener("DOMContentLoaded", async () => {
     document.getElementById("firma-ara").addEventListener("input", filtreUygula);
     document.getElementById("filtre-tip").addEventListener("change", filtreUygula);
     document.getElementById("filtre-aktif").addEventListener("change", filtreUygula);
-    document.getElementById("filtre-geciken").addEventListener("change", filtreUygula);
     document.getElementById("filtre-temizle-btn").addEventListener("click", filtreleriTemizle);
 
     document.getElementById("firma-onceki").addEventListener("click", () => {
       if (firmaSayfa <= 1) return;
       firmaSayfa -= 1;
-      ustOzetKartlariGuncelle(filtreliFirmalar);
       tabloyuCiz(filtreliFirmalar);
     });
     document.getElementById("firma-sonraki").addEventListener("click", () => {
       const toplamSayfa = Math.max(1, Math.ceil(filtreliFirmalar.length / FIRMA_SAYFA_BASINA));
       if (firmaSayfa >= toplamSayfa) return;
       firmaSayfa += 1;
-      ustOzetKartlariGuncelle(filtreliFirmalar);
       tabloyuCiz(filtreliFirmalar);
     });
 
     document.getElementById("firma-tablo-body").addEventListener("click", (e) => {
       const duzenle = e.target.closest("[data-duzenle]");
-      const faturalar = e.target.closest("[data-faturalar]");
+      const harcamalar = e.target.closest("[data-harcamalar]");
       const satir = e.target.closest("tr[data-firma-adi]");
       if (!satir) return;
       const firmaAdi = satir.getAttribute("data-firma-adi");
@@ -366,12 +344,12 @@ document.addEventListener("DOMContentLoaded", async () => {
         drawerAc(firma);
         return;
       }
-      if (faturalar) {
+      if (harcamalar) {
         e.stopPropagation();
-        faturalaraGit(firmaAdi);
+        harcamalaraGit(firmaAdi);
         return;
       }
-      faturalaraGit(firmaAdi);
+      harcamalaraGit(firmaAdi);
     });
   } catch (hata) {
     alert(`Veri yüklenemedi: ${hata.message}`);

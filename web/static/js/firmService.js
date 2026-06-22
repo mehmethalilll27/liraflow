@@ -7,10 +7,6 @@ const FirmService = {
     return ApiService.istek(`/firmalar/${encodeURIComponent(firmaAdi)}`);
   },
 
-  faturalar(firmaAdi) {
-    return ApiService.istek(`/firmalar/${encodeURIComponent(firmaAdi)}/faturalar`);
-  },
-
   ekle(payload) {
     return ApiService.istek("/firmalar", {
       method: "POST",

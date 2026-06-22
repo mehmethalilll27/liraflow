@@ -5,29 +5,74 @@ from typing import Any
 
 from supabase import Client, create_client
 
+try:
+    from postgrest.exceptions import APIError as PostgrestAPIError
+except ImportError:  # pragma: no cover
+    PostgrestAPIError = Exception
+
 from config import settings
-from data_access.field_maps import (
-    DEFAULT_AYARLAR,
-    FATURA_COMPUTED_KEYS,
-    FIRMA_PERSISTED_KEYS,
-)
+from data_access.field_maps import DEFAULT_AYARLAR, FIRMA_PERSISTED_KEYS
 
 CHUNK_SIZE = 50
-DB_METADATA_KEYS = frozenset({"created_at", "updated_at", "id"})
 MAX_RETRIES = 3
+ADJUST_TABLO_UYARI = (
+    "adjust_hareketler tablosu Supabase'de yok. "
+    "Supabase Dashboard → SQL Editor → supabase/migrate_adjust.sql dosyasını çalıştırın."
+)
+
+
+def _adjust_tablo_eksik_mi(exc: Exception) -> bool:
+    if isinstance(exc, PostgrestAPIError):
+        payload = exc.args[0] if exc.args and isinstance(exc.args[0], dict) else {}
+        if payload.get("code") == "PGRST205":
+            return True
+    metin = str(exc).casefold()
+    return "adjust_hareketler" in metin and ("pgrst205" in metin or "could not find the table" in metin)
+
+
+def _rls_hatasi_mi(exc: Exception) -> bool:
+    if isinstance(exc, PostgrestAPIError):
+        payload = exc.args[0] if exc.args and isinstance(exc.args[0], dict) else {}
+        if payload.get("code") == "42501":
+            return True
+    return "row-level security" in str(exc).casefold()
+
+
+RLS_UYARI = (
+    "Supabase RLS yazmayı engelliyor. Çözüm (birini yapın):\n"
+    "1) Supabase Dashboard → SQL Editor → supabase/fix_rls.sql dosyasını çalıştırın\n"
+    "2) .env içindeki SUPABASE_SERVICE_KEY değerini service_role secret ile değiştirin "
+    "(publishable/anon anahtar backend için uygun değil)"
+)
+
+
+def _supabase_anahtar_uyarisi() -> str | None:
+    anahtar = settings.SUPABASE_SERVICE_KEY.casefold()
+    if "publishable" in anahtar or anahtar.startswith("sb_publishable_"):
+        return (
+            "SUPABASE_SERVICE_KEY publishable (anon) anahtar gibi görünüyor. "
+            "Yazma hatalarında service_role secret kullanın veya fix_rls.sql çalıştırın."
+        )
+    return None
 
 
 class SupabaseStore:
     def __init__(self, client: Client | None = None) -> None:
+        self._adjust_tablo_var: bool | None = None
         if client is not None:
             self._client = client
             return
         if not settings.SUPABASE_URL or not settings.SUPABASE_SERVICE_KEY:
             raise RuntimeError(
                 "Supabase yapılandırması eksik. .env dosyasında SUPABASE_URL ve "
-                "SUPABASE_SERVICE_KEY tanımlayın. SQL şeması: supabase/schema.sql"
+                "SUPABASE_SERVICE_KEY tanımlayın."
             )
         self._client = create_client(settings.SUPABASE_URL, settings.SUPABASE_SERVICE_KEY)
+        uyar = _supabase_anahtar_uyarisi()
+        if uyar:
+            import warnings
+
+            warnings.warn(uyar, stacklevel=2)
 
     @staticmethod
     def _chunks(items: list[dict], size: int = CHUNK_SIZE) -> list[list[dict]]:
@@ -55,8 +100,6 @@ class SupabaseStore:
             value = firma[key]
             if key == "aktif_mi":
                 row[key] = bool(value)
-            elif key == "odeme_periyodu_gun":
-                row[key] = int(value or 30)
             else:
                 row[key] = value
         row.setdefault("eposta", "")
@@ -65,28 +108,8 @@ class SupabaseStore:
         row.setdefault("vergi_no", "")
         row.setdefault("adres", "")
         row.setdefault("aktif_mi", True)
-        row.setdefault("odeme_periyodu_gun", 30)
         row.setdefault("varsayilan_yon", "GIDER")
         row.setdefault("notlar", "")
-        return row
-
-    @staticmethod
-    def _fatura_to_row(fatura: dict) -> dict:
-        row = {
-            k: v
-            for k, v in fatura.items()
-            if k not in FATURA_COMPUTED_KEYS and k not in DB_METADATA_KEYS
-        }
-        row["tutar"] = round(float(row.get("tutar", 0)), 2)
-        row["odenen_tutar"] = round(float(row.get("odenen_tutar", 0) or 0), 2)
-        row["arsiv_mi"] = bool(row.get("arsiv_mi", False))
-        row["tahsilat_gecmisi"] = row.get("tahsilat_gecmisi") or []
-        row.setdefault("para_birimi", "TRY")
-        row.setdefault("notlar", "")
-        row.setdefault("kategori", "genel")
-        row.setdefault("oncelik", "orta")
-        row.setdefault("yon", "GIDER")
-        row.setdefault("firma_adi", "")
         return row
 
     def _upsert_rows(self, table: str, rows: list[dict], on_conflict: str) -> None:
@@ -98,39 +121,13 @@ class SupabaseStore:
         response = self._execute(self._client.table("firmalar").select("*").order("firma_id"))
         return response.data or []
 
-    def get_faturalar(self) -> list[dict]:
-        response = self._execute(self._client.table("faturalar").select("*").order("fatura_id"))
-        faturalar = response.data or []
-        for fatura in faturalar:
-            fatura.pop("created_at", None)
-            fatura.pop("updated_at", None)
-            fatura.setdefault("odenen_tutar", 0)
-            fatura.setdefault("tahsilat_gecmisi", [])
-            fatura.setdefault("arsiv_mi", False)
-            if fatura.get("tutar") is not None:
-                fatura["tutar"] = float(fatura["tutar"])
-            if fatura.get("odenen_tutar") is not None:
-                fatura["odenen_tutar"] = float(fatura["odenen_tutar"])
-        return faturalar
-
     def save_firmalar(self, firmalar: list[dict]) -> None:
         rows = [self._firma_to_row(firma) for firma in firmalar if firma.get("firma_id") is not None]
         if rows:
             self._upsert_rows("firmalar", rows, "firma_id")
 
-    def save_faturalar(self, faturalar: list[dict]) -> None:
-        rows = [self._fatura_to_row(fatura) for fatura in faturalar if fatura.get("fatura_id") is not None]
-        if rows:
-            self._upsert_rows("faturalar", rows, "fatura_id")
-
     def upsert_firma(self, firma: dict) -> None:
         self._upsert_rows("firmalar", [self._firma_to_row(firma)], "firma_id")
-
-    def upsert_fatura(self, fatura: dict) -> None:
-        self._upsert_rows("faturalar", [self._fatura_to_row(fatura)], "fatura_id")
-
-    def delete_fatura_by_no(self, fatura_no: str) -> None:
-        self._execute(self._client.table("faturalar").delete().eq("fatura_no", fatura_no))
 
     def replace_all_firmalar(self, firmalar: list[dict]) -> None:
         rows = [self._firma_to_row(firma) for firma in firmalar if firma.get("firma_id") is not None]
@@ -143,18 +140,6 @@ class SupabaseStore:
             id_list = [item["firma_id"] for item in chunk]
             if id_list:
                 self._execute(self._client.table("firmalar").delete().in_("firma_id", id_list))
-
-    def replace_all_faturalar(self, faturalar: list[dict]) -> None:
-        rows = [self._fatura_to_row(fatura) for fatura in faturalar if fatura.get("fatura_id") is not None]
-        ids = {row["fatura_id"] for row in rows}
-        if rows:
-            self._upsert_rows("faturalar", rows, "fatura_id")
-        mevcut = self._execute(self._client.table("faturalar").select("fatura_id")).data or []
-        silinecek = [item["fatura_id"] for item in mevcut if item.get("fatura_id") not in ids]
-        for chunk in self._chunks([{"fatura_id": i} for i in silinecek], 50):
-            id_list = [item["fatura_id"] for item in chunk]
-            if id_list:
-                self._execute(self._client.table("faturalar").delete().in_("fatura_id", id_list))
 
     def get_ayarlar(self) -> dict:
         response = self._execute(self._client.table("ayarlar").select("data").eq("id", 1).limit(1))
@@ -204,3 +189,87 @@ class SupabaseStore:
                     on_conflict="kullanici_adi",
                 )
             )
+
+    @staticmethod
+    def _hareket_to_row(hareket: dict) -> dict:
+        return {
+            "hareket_id": int(hareket["hareket_id"]),
+            "adjust_key": hareket["adjust_key"],
+            "partner_adi": hareket.get("partner_adi", ""),
+            "firma_id": hareket.get("firma_id"),
+            "firma_adi": hareket.get("firma_adi", ""),
+            "kampanya": hareket.get("kampanya", ""),
+            "app_adi": hareket.get("app_adi", ""),
+            "tarih": hareket["tarih"],
+            "yon": hareket.get("yon", "GIDER"),
+            "tutar": round(float(hareket.get("tutar", 0)), 2),
+            "para_birimi": hareket.get("para_birimi", "USD"),
+            "metrik": hareket.get("metrik", ""),
+            "installs": hareket.get("installs"),
+        }
+
+    def adjust_tablo_hazir_mi(self) -> bool:
+        if self._adjust_tablo_var is not None:
+            return self._adjust_tablo_var
+        try:
+            self._execute(self._client.table("adjust_hareketler").select("hareket_id").limit(1))
+            self._adjust_tablo_var = True
+        except Exception as exc:
+            if _adjust_tablo_eksik_mi(exc):
+                self._adjust_tablo_var = False
+                return False
+            raise
+        return True
+
+    def get_adjust_hareketler(self) -> list[dict]:
+        if not self.adjust_tablo_hazir_mi():
+            return []
+        try:
+            response = self._execute(
+                self._client.table("adjust_hareketler").select("*").order("tarih", desc=True)
+            )
+        except Exception as exc:
+            if _adjust_tablo_eksik_mi(exc):
+                self._adjust_tablo_var = False
+                return []
+            raise
+        hareketler = response.data or []
+        for hareket in hareketler:
+            hareket.pop("created_at", None)
+            hareket.pop("updated_at", None)
+            if hareket.get("tutar") is not None:
+                hareket["tutar"] = float(hareket["tutar"])
+            if hareket.get("tarih"):
+                hareket["tarih"] = str(hareket["tarih"])[:10]
+        return hareketler
+
+    def upsert_adjust_hareketler(self, hareketler: list[dict]) -> None:
+        if not self.adjust_tablo_hazir_mi():
+            raise RuntimeError(ADJUST_TABLO_UYARI)
+        rows = [self._hareket_to_row(h) for h in hareketler if h.get("hareket_id") is not None]
+        if not rows:
+            return
+        try:
+            self._upsert_rows("adjust_hareketler", rows, "adjust_key")
+            self._adjust_tablo_var = True
+        except Exception as exc:
+            if _adjust_tablo_eksik_mi(exc):
+                self._adjust_tablo_var = False
+                raise RuntimeError(ADJUST_TABLO_UYARI) from exc
+            if _rls_hatasi_mi(exc):
+                raise RuntimeError(RLS_UYARI) from exc
+            raise
+
+    def cleanup_legacy_partners(self, aktif_firma_idleri: set[int]) -> int:
+        """Adjust hareketi olmayan eski firmaları siler."""
+        mevcut = self._execute(self._client.table("firmalar").select("firma_id")).data or []
+        silinecek = [
+            item["firma_id"]
+            for item in mevcut
+            if item.get("firma_id") is not None and item["firma_id"] not in aktif_firma_idleri
+        ]
+        for chunk in self._chunks([{"firma_id": i} for i in silinecek], 50):
+            id_list = [item["firma_id"] for item in chunk]
+            if id_list:
+                self._execute(self._client.table("firmalar").delete().in_("firma_id", id_list))
+        return len(silinecek)
