@@ -277,7 +277,10 @@ async function syncDurumGuncelle() {
     }
     el.classList.remove("text-error", "font-semibold");
     if (durum.son_sync) {
-      el.textContent = `Son sync: ${new Date(durum.son_sync).toLocaleString("tr-TR")}`;
+      const modEtiketi = durum.mock ? " (demo veri)" : "";
+      el.textContent = `Son sync: ${new Date(durum.son_sync).toLocaleString("tr-TR")}${modEtiketi}`;
+    } else if (durum.mock) {
+      el.textContent = "Demo Adjust API — senkronize edebilirsiniz";
     } else if (!durum.yapilandirildi) {
       el.textContent = "ADJUST_API_TOKEN tanımlayın";
     } else {

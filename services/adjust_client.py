@@ -6,6 +6,7 @@ import urllib.parse
 import urllib.request
 
 from config import settings
+from services.adjust_mock import MockAdjustClient
 
 BASE_URL = "https://automate.adjust.com/reports-service"
 DEFAULT_METRICS = "network_cost,all_revenue,installs"
@@ -26,11 +27,13 @@ class AdjustClient:
         self.api_token = (api_token or settings.ADJUST_API_TOKEN).strip()
         if not self.api_token:
             raise ValueError(
-                "Adjust API token eksik. .env dosyasına ADJUST_API_TOKEN ekleyin."
+                "Adjust API token eksik. data/.env dosyasına ADJUST_API_TOKEN ekleyin "
+                "veya ADJUST_MODE=mock kullanın."
             )
-        if self.api_token.casefold().startswith("buraya"):
+        if settings.adjust_token_placeholder_mi() and not settings.adjust_mock_mi():
             raise ValueError(
-                "ADJUST_API_TOKEN hâlâ örnek değerde. data/.env içine gerçek Adjust API token yazın."
+                "ADJUST_API_TOKEN hâlâ örnek değerde. Gerçek API için token yazın "
+                "veya ADJUST_MODE=mock bırakın."
             )
 
         raw_tokens = app_tokens if app_tokens is not None else settings.adjust_app_tokens_list()
@@ -76,3 +79,12 @@ class AdjustClient:
             if _app_token_hatasi_mi(str(exc)):
                 return self._istek_gonder(temel)
             raise
+
+
+def adjust_client_olustur(
+    api_token: str | None = None,
+    app_tokens: list[str] | None = None,
+) -> AdjustClient | MockAdjustClient:
+    if settings.adjust_mock_mi():
+        return MockAdjustClient(api_token=api_token, app_tokens=app_tokens)
+    return AdjustClient(api_token=api_token, app_tokens=app_tokens)

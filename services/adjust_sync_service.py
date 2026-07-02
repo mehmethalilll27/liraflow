@@ -7,7 +7,8 @@ from datetime import date, datetime, timedelta, timezone
 from config import settings
 from data_access import get_store
 from models.firma import Firma
-from services.adjust_client import AdjustClient
+from services.adjust_client import AdjustClient, adjust_client_olustur
+from services.adjust_mock import MockAdjustClient
 
 
 def _slugify(metin: str) -> str:
@@ -34,12 +35,16 @@ def _sayi_tamsayi(deger) -> int | None:
 
 
 class AdjustSyncService:
-    def __init__(self, store=None, client: AdjustClient | None = None) -> None:
+    def __init__(
+        self,
+        store=None,
+        client: AdjustClient | MockAdjustClient | None = None,
+    ) -> None:
         self.store = store or get_store()
         self.client = client
 
-    def _client_al(self) -> AdjustClient:
-        return self.client or AdjustClient()
+    def _client_al(self) -> AdjustClient | MockAdjustClient:
+        return self.client or adjust_client_olustur()
 
     @staticmethod
     def _hareket_id_uret(adjust_key: str) -> int:
@@ -167,6 +172,7 @@ class AdjustSyncService:
 
         return {
             "ok": True,
+            "mod": "mock" if settings.adjust_mock_mi() else "live",
             "donem": date_period,
             "satir_sayisi": len(satirlar),
             "hareket_sayisi": len(tum_hareketler),
@@ -182,8 +188,11 @@ class AdjustSyncService:
         if hasattr(self.store, "adjust_tablo_hazir_mi"):
             tablo_hazir = self.store.adjust_tablo_hazir_mi()
         hareketler = self.store.get_adjust_hareketler() if hasattr(self.store, "get_adjust_hareketler") else []
+        mock = settings.adjust_mock_mi()
         return {
-            "yapilandirildi": bool(settings.ADJUST_API_TOKEN),
+            "mod": "mock" if mock else "live",
+            "yapilandirildi": mock or bool(settings.ADJUST_API_TOKEN),
+            "mock": mock,
             "app_token_sayisi": len(settings.adjust_app_tokens_list()),
             "son_sync": ayarlar.get("adjust_son_sync"),
             "sync_gun": int(ayarlar.get("adjust_sync_gun", settings.ADJUST_SYNC_GUN)),

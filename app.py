@@ -8,6 +8,7 @@ import config  # noqa: F401 — .env yüklenir
 from services.auth_routes import auth_router_olustur, oturum_zorunlu
 from services.cashflow_service import CashflowService
 from services.adjust_sync_service import AdjustSyncService
+from services.adjust_mock import pivot_report_uret
 
 app = FastAPI(title="LiraFlow Backend", version="2.0.0")
 api = APIRouter(prefix="/api", dependencies=[Depends(oturum_zorunlu)])
@@ -171,6 +172,14 @@ def hareketleri_listele(
     partner: str | None = Query(default=None),
 ) -> list[dict]:
     return service.list_hareketler(gun=gun, yon=yon, partner=partner)
+
+
+@public_api.get("/mock/adjust/reports-service/pivot_report")
+def mock_adjust_pivot_report(
+    date_period: str = Query(..., description="YYYY-MM-DD:YYYY-MM-DD"),
+) -> dict:
+    """Gerçek Adjust API formatında sahte pivot raporu (demo/test)."""
+    return pivot_report_uret(date_period)
 
 
 @api.get("/adjust/durum")

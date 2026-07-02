@@ -12,10 +12,20 @@ class Settings:
     DATA_STORE: str = os.getenv("DATA_STORE", "supabase").strip().lower()
     SUPABASE_URL: str = os.getenv("SUPABASE_URL", "").strip()
     SUPABASE_SERVICE_KEY: str = os.getenv("SUPABASE_SERVICE_KEY", "").strip()
+    ADJUST_MODE: str = os.getenv("ADJUST_MODE", "mock").strip().lower()
     ADJUST_API_TOKEN: str = os.getenv("ADJUST_API_TOKEN", "").strip()
     ADJUST_APP_TOKENS: str = os.getenv("ADJUST_APP_TOKENS", "").strip()
     ADJUST_SYNC_GUN: int = int(os.getenv("ADJUST_SYNC_GUN", "90"))
     ADJUST_PARA_BIRIMI: str = os.getenv("ADJUST_PARA_BIRIMI", "USD").strip().upper() or "USD"
+
+    _TOKEN_PLACEHOLDER = (
+        "buraya",
+        "gercek",
+        "your_",
+        "ornek",
+        "example",
+        "token",
+    )
 
     _APP_TOKEN_PLACEHOLDER = (
         "buraya",
@@ -40,6 +50,20 @@ class Settings:
                 continue
             sonuc.append(token)
         return sonuc
+
+    def adjust_token_placeholder_mi(self) -> bool:
+        if not self.ADJUST_API_TOKEN:
+            return True
+        alt = self.ADJUST_API_TOKEN.casefold()
+        return any(p in alt for p in self._TOKEN_PLACEHOLDER)
+
+    def adjust_mock_mi(self) -> bool:
+        mod = self.ADJUST_MODE
+        if mod in {"mock", "demo", "fake", "sahte"}:
+            return True
+        if mod in {"live", "gercek", "production", "prod"}:
+            return False
+        return self.adjust_token_placeholder_mi()
 
 
 settings = Settings()

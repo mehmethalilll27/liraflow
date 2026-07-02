@@ -1,6 +1,10 @@
+const SAYFA_BOYUTU = 10;
+
 let aktifGun = 30;
 let aktifYon = "";
 let aktifPartner = "";
+let tumListe = [];
+let aktifSayfa = 1;
 
 const urlParams = new URLSearchParams(window.location.search);
 if (urlParams.get("yon")) aktifYon = urlParams.get("yon").toUpperCase();
@@ -10,6 +14,10 @@ function filtreButonSinifi(secili) {
   return secili
     ? "px-4 py-2 rounded-full text-sm font-semibold bg-primary text-white"
     : "px-4 py-2 rounded-full text-sm font-semibold border border-outline-variant hover:bg-gray-50";
+}
+
+function toplamSayfa() {
+  return Math.max(1, Math.ceil(tumListe.length / SAYFA_BOYUTU));
 }
 
 function satirCiz(h) {
@@ -26,6 +34,41 @@ function satirCiz(h) {
   `;
 }
 
+function tabloyuCiz() {
+  const body = document.getElementById("hareket-body");
+  const sayfalama = document.getElementById("sayfalama");
+  if (!body) return;
+
+  if (!tumListe.length) {
+    body.innerHTML =
+      '<tr><td colspan="5" class="px-6 py-8 text-center text-on-surface-variant">Bu dönemde kayıt yok. Adjust\'tan senkronize edin.</td></tr>';
+    if (sayfalama) sayfalama.classList.add("hidden");
+    return;
+  }
+
+  const sonSayfa = toplamSayfa();
+  if (aktifSayfa > sonSayfa) aktifSayfa = sonSayfa;
+  if (aktifSayfa < 1) aktifSayfa = 1;
+
+  const bas = (aktifSayfa - 1) * SAYFA_BOYUTU;
+  const sayfaKayitlari = tumListe.slice(bas, bas + SAYFA_BOYUTU);
+  body.innerHTML = sayfaKayitlari.map(satirCiz).join("");
+
+  const ozet = document.getElementById("sayfalama-ozet");
+  const etiket = document.getElementById("sayfalama-etiket");
+  const onceki = document.getElementById("sayfa-onceki");
+  const sonraki = document.getElementById("sayfa-sonraki");
+
+  const basIdx = bas + 1;
+  const bitIdx = bas + sayfaKayitlari.length;
+
+  if (sayfalama) sayfalama.classList.remove("hidden");
+  if (ozet) ozet.textContent = `${basIdx}-${bitIdx} / ${tumListe.length} kayıt`;
+  if (etiket) etiket.textContent = `Sayfa ${aktifSayfa} / ${sonSayfa}`;
+  if (onceki) onceki.disabled = aktifSayfa <= 1;
+  if (sonraki) sonraki.disabled = aktifSayfa >= sonSayfa;
+}
+
 async function syncDurumGuncelle() {
   const el = document.getElementById("sync-durum");
   if (!el) return;
@@ -37,7 +80,7 @@ async function syncDurumGuncelle() {
     } else {
       parcalar.push("henüz senkronize edilmedi");
     }
-    if (!durum.yapilandirildi) {
+    if (!durum.yapilandirildi && !durum.mock) {
       parcalar.push("ADJUST_API_TOKEN eksik");
     }
     el.textContent = parcalar.join(" · ");
@@ -49,20 +92,39 @@ async function syncDurumGuncelle() {
 async function hareketleriYukle() {
   const body = document.getElementById("hareket-body");
   if (!body) return;
-  body.innerHTML = `<tr><td colspan="5" class="px-6 py-8 text-center text-on-surface-variant">Yükleniyor...</td></tr>`;
+  body.innerHTML =
+    '<tr><td colspan="5" class="px-6 py-8 text-center text-on-surface-variant">Yükleniyor...</td></tr>';
 
-  const liste = await HareketService.listele({
+  tumListe = await HareketService.listele({
     gun: aktifGun,
     yon: aktifYon || null,
     partner: aktifPartner || null,
   });
 
-  if (!liste.length) {
-    body.innerHTML = `<tr><td colspan="5" class="px-6 py-8 text-center text-on-surface-variant">Bu dönemde kayıt yok. Adjust'tan senkronize edin.</td></tr>`;
-    return;
-  }
+  aktifSayfa = 1;
+  tabloyuCiz();
+}
 
-  body.innerHTML = liste.map(satirCiz).join("");
+function sayfalamaBagla() {
+  const kapsayici = document.getElementById("sayfalama");
+  if (!kapsayici || kapsayici.dataset.bagli === "1") return;
+  kapsayici.dataset.bagli = "1";
+
+  kapsayici.addEventListener("click", (e) => {
+    const btn = e.target.closest("[data-sayfa]");
+    if (!btn || btn.disabled) return;
+
+    const yon = btn.getAttribute("data-sayfa");
+    if (yon === "onceki" && aktifSayfa > 1) {
+      aktifSayfa -= 1;
+      tabloyuCiz();
+      document.getElementById("hareket-body")?.scrollIntoView({ behavior: "smooth", block: "start" });
+    } else if (yon === "sonraki" && aktifSayfa < toplamSayfa()) {
+      aktifSayfa += 1;
+      tabloyuCiz();
+      document.getElementById("hareket-body")?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+  });
 }
 
 function filtreleriBagla() {
@@ -104,6 +166,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     return;
   }
 
+  sayfalamaBagla();
   filtreleriBagla();
   await syncDurumGuncelle();
   await hareketleriYukle();
