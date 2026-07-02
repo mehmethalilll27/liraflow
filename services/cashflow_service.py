@@ -24,10 +24,35 @@ class CashflowService:
             if anahtar in izinli:
                 mevcut[anahtar] = deger
         if "mevcut_kasa_bakiyesi" in yeni_ayarlar:
-            mevcut["mevcut_kasa_bakiyesi"] = round(float(mevcut.get("mevcut_kasa_bakiyesi", 0)), 2)
+            try:
+                kasa = float(mevcut.get("mevcut_kasa_bakiyesi", 0))
+            except (TypeError, ValueError) as exc:
+                raise ValueError("Mevcut kasa bakiyesi sayi olmalidir.") from exc
+            if kasa < 0:
+                raise ValueError("Mevcut kasa bakiyesi negatif olamaz.")
+            mevcut["mevcut_kasa_bakiyesi"] = round(kasa, 2)
         if "varsayilan_dashboard_periyodu" in yeni_ayarlar:
-            gun = int(mevcut.get("varsayilan_dashboard_periyodu", 30))
-            mevcut["varsayilan_dashboard_periyodu"] = max(1, min(365, gun))
+            try:
+                gun = int(mevcut.get("varsayilan_dashboard_periyodu", 30))
+            except (TypeError, ValueError) as exc:
+                raise ValueError("Varsayilan dashboard periyodu tam sayi olmalidir.") from exc
+            if gun < 1 or gun > 365:
+                raise ValueError("Varsayilan dashboard periyodu 1 ile 365 arasinda olmalidir.")
+            mevcut["varsayilan_dashboard_periyodu"] = gun
+        if "adjust_sync_gun" in yeni_ayarlar:
+            try:
+                sync_gun = int(mevcut.get("adjust_sync_gun", 90))
+            except (TypeError, ValueError) as exc:
+                raise ValueError("Adjust senkron gun sayisi tam sayi olmalidir.") from exc
+            if sync_gun < 1 or sync_gun > 365:
+                raise ValueError("Adjust senkron gun sayisi 1 ile 365 arasinda olmalidir.")
+            mevcut["adjust_sync_gun"] = sync_gun
+        for metin_alan in ("kullanici_adi", "kullanici_unvan"):
+            if metin_alan in yeni_ayarlar:
+                deger = str(mevcut.get(metin_alan, "")).strip()
+                if len(deger) > 100:
+                    raise ValueError(f"{metin_alan.replace('_', ' ').title()} 100 karakterden uzun olamaz.")
+                mevcut[metin_alan] = deger
         self.store.save_ayarlar(mevcut)
         return mevcut
 

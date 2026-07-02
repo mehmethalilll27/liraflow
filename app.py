@@ -103,7 +103,10 @@ def ayarlari_getir() -> dict:
 
 @api.patch("/ayarlar")
 def ayarlari_guncelle(payload: AyarlarPayload) -> dict:
-    return service.update_ayarlar(payload.model_dump(exclude_none=True))
+    try:
+        return service.update_ayarlar(payload.model_dump(exclude_none=True))
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
 
 
 @api.get("/bildirimler")

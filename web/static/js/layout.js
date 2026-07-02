@@ -70,17 +70,7 @@ const Layout = {
   },
 
   globalAramaBagla() {
-    const panelAra = document.getElementById("panel-ara");
-    if (!panelAra || panelAra.dataset.aramaBagli === "1") return;
-    panelAra.dataset.aramaBagli = "1";
-    panelAra.addEventListener("keydown", (e) => {
-      if (e.key !== "Enter") return;
-      e.preventDefault();
-      const arama = panelAra.value.trim();
-      if (arama) {
-        window.location.href = `/harcamalar?partner=${encodeURIComponent(arama)}`;
-      }
-    });
+    // Panel araması panel.page.js içinde yönetilir (anlık filtre).
   },
 
   bagla() {

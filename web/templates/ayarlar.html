@@ -1,95 +1,142 @@
+<!--
+  LiraFlow — Ayarlar Sayfası
+  Kullanıcı bilgisi, kasa bakiyesi ve Adjust senkron ayarları.
+  Form kaydı: static/js/ayarlar.page.js
+-->
 <!DOCTYPE html>
 <html class="light" lang="tr">
 <head>
-<meta charset="utf-8"/>
-<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>LiraFlow | Ayarlar</title>
-<script src="https://cdn.tailwindcss.com?plugins=forms"></script>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet"/>
-<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght@400&display=swap" rel="stylesheet"/>
-<style>
-body { font-family: Inter, sans-serif; }
-.material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
-</style>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <title>LiraFlow | Ayarlar</title>
+
+  <script src="https://cdn.tailwindcss.com?plugins=forms"></script>
+  <script src="/static/js/tailwind.theme.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght@400&display=swap" rel="stylesheet" />
+  <link href="/static/style.css?v=2" rel="stylesheet" />
 </head>
+
 <body class="bg-[#f8f9ff] text-[#0b1c30]">
-<aside class="fixed left-0 top-0 h-full w-[280px] bg-[#091426] text-white flex flex-col py-6 z-50">
-<h1 class="px-6 text-2xl font-bold mb-2">LiraFlow</h1>
-<p class="px-6 text-sm text-white/60 mb-8">Nakit Akışı Yönetimi</p>
-<nav class="flex-1 px-4 space-y-1">
-<a href="/" class="flex items-center gap-3 px-4 py-2 rounded-lg hover:bg-white/10">Panel</a>
-<a href="/firmalar" class="flex items-center gap-3 px-4 py-2 rounded-lg hover:bg-white/10">Partnerler</a>
-<a href="/harcamalar" class="flex items-center gap-3 px-4 py-2 rounded-lg hover:bg-white/10">Harcamalar</a>
-</nav>
-</aside>
-<header class="fixed top-0 right-0 w-[calc(100%-280px)] h-16 bg-white border-b border-gray-200 flex justify-end items-center px-8 z-40">
-<div class="flex items-center gap-lg relative shrink-0">
-<div class="relative">
-<button type="button" class="relative p-2 text-gray-500 hover:bg-gray-100 transition-all rounded-full" id="bildirim-btn">
-<span class="material-symbols-outlined">notifications</span>
-<span class="absolute top-2 right-2 min-w-[18px] h-[18px] px-1 bg-red-600 rounded-full border-2 border-white text-[10px] text-white font-bold hidden items-center justify-center" id="bildirim-badge">0</span>
-</button>
-<div class="hidden absolute right-0 top-12 w-80 bg-white border border-gray-200 rounded-xl shadow-lg z-50 p-4" id="bildirim-panel">
-<p class="font-bold text-sm mb-2">Bildirimler</p>
-<div id="bildirim-liste" class="text-sm text-gray-600 max-h-60 overflow-y-auto"></div>
-</div>
-</div>
-<div class="relative">
-<button type="button" class="flex items-center gap-sm hover:bg-gray-100 p-1 pr-3 rounded-full transition-all" id="hesap-btn">
-<span class="w-9 h-9 rounded-full bg-[#6ffbbe] flex items-center justify-center text-[#091426] font-bold text-sm" id="hesap-bas-harf">AK</span>
-<span class="font-semibold text-sm hidden sm:inline" id="hesap-ad-kisa">Hesabım</span>
-</button>
-<div class="hidden absolute right-0 top-12 w-64 bg-white border border-gray-200 rounded-xl shadow-lg z-50 overflow-hidden" id="hesap-panel">
-<div class="p-4 border-b border-gray-200 bg-gray-50">
-<p class="font-bold text-sm" id="hesap-ad">-</p>
-<p class="text-xs text-gray-500" id="hesap-unvan">-</p>
-</div>
-<a href="/ayarlar" class="flex items-center gap-sm px-4 py-2 text-sm hover:bg-gray-50">
-<span class="material-symbols-outlined text-md">settings</span>
-Ayarlar
-</a>
-<button type="button" id="cikis-btn" class="w-full flex items-center gap-sm px-4 py-2 text-sm text-red-600 hover:bg-red-50">
-<span class="material-symbols-outlined text-md">logout</span>
-Çıkış Yap
-</button>
-</div>
-</div>
-</div>
-</header>
-<main class="ml-[280px] mt-16 p-8 max-w-3xl">
-<h2 class="text-3xl font-bold mb-2">Ayarlar</h2>
-<p class="text-gray-500 mb-8">LiraFlow genel yapılandırması</p>
-<form id="ayarlar-form" class="space-y-6 bg-white rounded-xl border border-gray-200 p-6 shadow-sm">
-<div>
-<label class="block text-sm font-semibold mb-1">Kullanıcı Adı</label>
-<input id="kullanici_adi" class="w-full border rounded-lg px-3 py-2" type="text"/>
-</div>
-<div>
-<label class="block text-sm font-semibold mb-1">Ünvan</label>
-<input id="kullanici_unvan" class="w-full border rounded-lg px-3 py-2" type="text"/>
-</div>
-<div>
-<label class="block text-sm font-semibold mb-1">Mevcut Kasa Bakiyesi</label>
-<input id="mevcut_kasa_bakiyesi" class="w-full border rounded-lg px-3 py-2" type="number" min="0" step="1000"/>
-<p class="text-xs text-gray-500 mt-1">Dashboard net nakit hesabında kullanılır</p>
-</div>
-<div>
-<label class="block text-sm font-semibold mb-1">Varsayılan Dashboard Periyodu (gün)</label>
-<input type="number" min="1" max="365" step="1" id="varsayilan_dashboard_periyodu" class="w-full border rounded-lg px-3 py-2" value="30"/>
-</div>
-<div>
-<label class="block text-sm font-semibold mb-1">Adjust Senkron Gün Sayısı</label>
-<input type="number" min="1" max="365" step="1" id="adjust_sync_gun" class="w-full border rounded-lg px-3 py-2" value="90"/>
-<p class="text-xs text-gray-500 mt-1">Adjust'tan kaç günlük veri çekileceği</p>
-</div>
-<button type="submit" class="bg-[#091426] text-white px-6 py-2 rounded-lg font-semibold hover:opacity-90">Kaydet</button>
-</form>
-</main>
-<script src="/static/js/utils.js?v=9"></script>
-<script src="/static/js/apiService.js"></script>
-<script src="/static/js/settingsService.js"></script>
-<script src="/static/js/authService.js"></script>
-<script src="/static/js/layout.js"></script>
-<script src="/static/js/ayarlar.page.js?v=3"></script>
+
+  <!-- SOL MENÜ -->
+  <aside class="fixed left-0 top-0 h-full w-[280px] bg-primary flex flex-col py-lg z-50 shadow-md">
+    <div class="px-lg mb-xl">
+      <h1 class="font-headline-lg text-headline-lg font-bold text-on-primary">LiraFlow</h1>
+      <p class="font-label-md text-label-md text-secondary-fixed/70">Nakit Akışı Yönetimi</p>
+    </div>
+
+    <nav class="flex-1 space-y-xs px-md">
+      <a href="/" class="flex items-center gap-md px-md py-sm rounded-lg text-on-primary-container hover:text-on-primary hover:bg-primary-container/50 transition-colors duration-200">
+        <span class="material-symbols-outlined">dashboard</span>
+        <span class="font-label-md text-label-md">Panel</span>
+      </a>
+      <a href="/firmalar" class="flex items-center gap-md px-md py-sm rounded-lg text-on-primary-container hover:text-on-primary hover:bg-primary-container/50 transition-colors duration-200">
+        <span class="material-symbols-outlined">business</span>
+        <span class="font-label-md text-label-md">Partnerler</span>
+      </a>
+      <a href="/harcamalar" class="flex items-center gap-md px-md py-sm rounded-lg text-on-primary-container hover:text-on-primary hover:bg-primary-container/50 transition-colors duration-200">
+        <span class="material-symbols-outlined">payments</span>
+        <span class="font-label-md text-label-md">Harcamalar</span>
+      </a>
+      <!-- Ayarlar sayfası menüde ayrı link değil; sağ üst hesap menüsünden gelinir -->
+    </nav>
+  </aside>
+
+  <!-- ÜST ÇUBUK — bildirim ve hesap menüsü (layout.js yönetir) -->
+  <header class="fixed top-0 right-0 w-[calc(100%-280px)] h-16 bg-white border-b border-gray-200 flex justify-end items-center px-8 z-40">
+    <div class="flex items-center gap-lg relative shrink-0">
+
+      <!-- Bildirimler -->
+      <div class="relative">
+        <button type="button" class="relative p-2 text-gray-500 hover:bg-gray-100 transition-all rounded-full" id="bildirim-btn">
+          <span class="material-symbols-outlined">notifications</span>
+          <span class="absolute top-2 right-2 min-w-[18px] h-[18px] px-1 bg-red-600 rounded-full border-2 border-white text-[10px] text-white font-bold hidden items-center justify-center" id="bildirim-badge">0</span>
+        </button>
+        <div class="hidden absolute right-0 top-12 w-80 bg-white border border-gray-200 rounded-xl shadow-lg z-50 p-4" id="bildirim-panel">
+          <p class="font-bold text-sm mb-2">Bildirimler</p>
+          <div id="bildirim-liste" class="text-sm text-gray-600 max-h-60 overflow-y-auto"></div>
+        </div>
+      </div>
+
+      <!-- Hesap menüsü -->
+      <div class="relative">
+        <button type="button" class="flex items-center gap-sm hover:bg-gray-100 p-1 pr-3 rounded-full transition-all" id="hesap-btn">
+          <span class="w-9 h-9 rounded-full bg-[#6ffbbe] flex items-center justify-center text-[#091426] font-bold text-sm" id="hesap-bas-harf">AK</span>
+          <span class="font-semibold text-sm hidden sm:inline" id="hesap-ad-kisa">Hesabım</span>
+        </button>
+        <div class="hidden absolute right-0 top-12 w-64 bg-white border border-gray-200 rounded-xl shadow-lg z-50 overflow-hidden" id="hesap-panel">
+          <div class="p-4 border-b border-gray-200 bg-gray-50">
+            <p class="font-bold text-sm" id="hesap-ad">-</p>
+            <p class="text-xs text-gray-500" id="hesap-unvan">-</p>
+          </div>
+          <a href="/ayarlar" class="flex items-center gap-sm px-4 py-2 text-sm hover:bg-gray-50">
+            <span class="material-symbols-outlined text-md">settings</span>
+            Ayarlar
+          </a>
+          <button type="button" id="cikis-btn" class="w-full flex items-center gap-sm px-4 py-2 text-sm text-red-600 hover:bg-red-50">
+            <span class="material-symbols-outlined text-md">logout</span>
+            Çıkış Yap
+          </button>
+        </div>
+      </div>
+
+    </div>
+  </header>
+
+  <!-- ANA İÇERİK — ayarlar formu -->
+  <main class="ml-[280px] mt-16 p-8 max-w-3xl">
+    <h2 class="text-3xl font-bold mb-2">Ayarlar</h2>
+    <p class="text-gray-500 mb-8">LiraFlow genel yapılandırması</p>
+
+    <!--
+      Her input'un id'si API alan adıyla aynıdır.
+      ayarlar.page.js bu id'leri kullanarak veri okur/yazar.
+    -->
+    <form id="ayarlar-form" class="space-y-6 bg-white rounded-xl border border-gray-200 p-6 shadow-sm">
+      <p id="ayarlar-mesaj" class="hidden text-sm font-semibold"></p>
+
+      <div>
+        <label class="block text-sm font-semibold mb-1" for="kullanici_adi">Kullanıcı Adı</label>
+        <input id="kullanici_adi" class="w-full border rounded-lg px-3 py-2" type="text" />
+      </div>
+
+      <div>
+        <label class="block text-sm font-semibold mb-1" for="kullanici_unvan">Ünvan</label>
+        <input id="kullanici_unvan" class="w-full border rounded-lg px-3 py-2" type="text" />
+      </div>
+
+      <div>
+        <label class="block text-sm font-semibold mb-1" for="mevcut_kasa_bakiyesi">Mevcut Kasa Bakiyesi</label>
+        <input id="mevcut_kasa_bakiyesi" class="w-full border rounded-lg px-3 py-2" type="number" min="0" step="1000" />
+        <p class="text-xs text-gray-500 mt-1">Dashboard net nakit hesabında kullanılır</p>
+      </div>
+
+      <div>
+        <label class="block text-sm font-semibold mb-1" for="varsayilan_dashboard_periyodu">Varsayılan Dashboard Periyodu (gün)</label>
+        <input type="number" min="1" max="365" step="1" id="varsayilan_dashboard_periyodu" class="w-full border rounded-lg px-3 py-2" value="30" />
+      </div>
+
+      <div>
+        <label class="block text-sm font-semibold mb-1" for="adjust_sync_gun">Adjust Senkron Gün Sayısı</label>
+        <input type="number" min="1" max="365" step="1" id="adjust_sync_gun" class="w-full border rounded-lg px-3 py-2" value="90" />
+        <p class="text-xs text-gray-500 mt-1">Adjust'tan kaç günlük veri çekileceği</p>
+      </div>
+
+      <button type="submit" class="bg-[#091426] text-white px-6 py-2 rounded-lg font-semibold hover:opacity-90">
+        Kaydet
+      </button>
+
+    </form>
+  </main>
+
+  <script src="/static/js/utils.js?v=9"></script>
+  <script src="/static/js/apiService.js"></script>
+  <script src="/static/js/settingsService.js"></script>
+  <script src="/static/js/authService.js"></script>
+  <script src="/static/js/layout.js"></script>
+  <script src="/static/js/ayarlar.page.js?v=3"></script>
+
 </body>
 </html>

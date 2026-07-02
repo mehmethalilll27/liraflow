@@ -1,4 +1,7 @@
 let aktifDonemGun = 30;
+let sonDashboardVerisi = null;
+let aramaZamanlayici = null;
+let aramaIstekNo = 0;
 
 const PANEL_UYARI_KAPALI = "panel_uyari_kapali";
 const PANEL_UYARI_ACIK = "panel_uyari_acik";
@@ -93,6 +96,113 @@ function metinAyarla(id, deger) {
   if (node) node.textContent = deger;
 }
 
+function partnerOzetUret(hareketler, yon, paraBirimi = "USD", limit = 8) {
+  const map = new Map();
+  hareketler.forEach((h) => {
+    if ((h.yon || "GIDER") !== yon) return;
+    const ad = (h.partner_adi || h.firma_adi || "Bilinmeyen").trim();
+    const mevcut = map.get(ad) || {
+      firma_adi: ad,
+      tutar: 0,
+      hareket_adedi: 0,
+      para_birimi: h.para_birimi || paraBirimi,
+      tarih: "",
+    };
+    mevcut.tutar += Number(h.tutar || 0);
+    mevcut.hareket_adedi += 1;
+    const tarih = String(h.tarih || "").slice(0, 10);
+    if (tarih > mevcut.tarih) mevcut.tarih = tarih;
+    map.set(ad, mevcut);
+  });
+
+  return [...map.values()]
+    .sort((a, b) => b.tutar - a.tutar)
+    .slice(0, limit)
+    .map((x) => ({ ...x, tutar: Number(x.tutar.toFixed(2)) }));
+}
+
+function aramaDashboardiOlustur(hareketler, temelDashboard) {
+  const paraBirimi =
+    hareketler[0]?.para_birimi || temelDashboard?.para_birimi || "USD";
+  const mevcutKasa = Number(temelDashboard?.mevcut_kasa || 0);
+
+  const gelirHareketleri = hareketler.filter((h) => (h.yon || "GIDER") === "GELIR");
+  const giderHareketleri = hareketler.filter((h) => (h.yon || "GIDER") === "GIDER");
+  const gelirToplam = Number(
+    gelirHareketleri.reduce((s, h) => s + Number(h.tutar || 0), 0).toFixed(2)
+  );
+  const giderToplam = Number(
+    giderHareketleri.reduce((s, h) => s + Number(h.tutar || 0), 0).toFixed(2)
+  );
+
+  const ozetGelir = partnerOzetUret(hareketler, "GELIR", paraBirimi);
+  const ozetGider = partnerOzetUret(hareketler, "GIDER", paraBirimi);
+
+  return {
+    ...(temelDashboard || {}),
+    para_birimi: paraBirimi,
+    net_durum: Number((mevcutKasa + gelirToplam - giderToplam).toFixed(2)),
+    gelen: {
+      donem_toplam: gelirToplam,
+      donem_adedi: gelirHareketleri.length,
+      partner_adedi: ozetGelir.length,
+    },
+    giden: {
+      donem_toplam: giderToplam,
+      donem_adedi: giderHareketleri.length,
+      partner_adedi: ozetGider.length,
+    },
+    yaklasan_hareketler: hareketler.slice(0, 25).map((h) => ({
+      adjust_key: h.adjust_key || "",
+      firma_adi: h.partner_adi || h.firma_adi || "",
+      tutar: Number(h.tutar || 0),
+      para_birimi: h.para_birimi || paraBirimi,
+      tarih: String(h.tarih || "").slice(0, 10),
+      yon: h.yon || "GIDER",
+      kampanya: h.kampanya || "",
+    })),
+    yaklasan_odemeler: ozetGider,
+    yaklasan_tahsilatlar: ozetGelir,
+  };
+}
+
+function dashboardListeleriCiz(d) {
+  if (!d) return;
+
+  const hareketler = d.yaklasan_hareketler || [];
+  const arama = (document.getElementById("panel-ara")?.value || "").trim();
+  const aramaMetni = arama
+    ? ` · "${arama}" için ${hareketler.length} sonuç`
+    : "";
+
+  metinAyarla("dash-hareket-sayi", `${hareketler.length} hareket · son ${d.donem_gun} gün${aramaMetni}`);
+
+  const hareketListe = el("dash-hareket-liste");
+  if (hareketListe) {
+    hareketListe.innerHTML = hareketler.length
+      ? hareketler.map(hareketSatirCiz).join("")
+      : `<p class="px-lg py-lg text-center text-on-surface-variant text-sm">${
+          arama ? "Aramanızla eşleşen hareket yok." : "Henüz veri yok. Adjust'tan senkronize edin."
+        }</p>`;
+  }
+
+  const odemeBody = el("dash-odeme-body");
+  if (odemeBody) {
+    const odemeler = d.yaklasan_odemeler || [];
+    odemeBody.innerHTML = odemeler.length
+      ? odemeler.map(tabloSatirCiz).join("")
+      : bosTabloMesaji(arama ? "Eşleşen harcama partneri yok" : "Bu dönemde harcama yok");
+  }
+
+  const tahsilatBody = el("dash-tahsilat-body");
+  if (tahsilatBody) {
+    const tahsilatlar = d.yaklasan_tahsilatlar || [];
+    tahsilatBody.innerHTML = tahsilatlar.length
+      ? tahsilatlar.map(tabloSatirCiz).join("")
+      : bosTabloMesaji(arama ? "Eşleşen gelir partneri yok" : "Bu dönemde gelir yok");
+  }
+}
+
 function dashboardRender(d) {
   if (!d || !d.gelen || !d.giden) {
     throw new Error("Dashboard verisi eksik veya hatalı.");
@@ -152,28 +262,7 @@ function dashboardRender(d) {
   metinAyarla("dash-bar-gelen-etiket", `Gelir ${Utils.formatTRY(gelenDonem, pb)}`);
   metinAyarla("dash-bar-giden-etiket", `Harcama ${Utils.formatTRY(gidenDonem, pb)}`);
 
-  const hareketler = d.yaklasan_hareketler || [];
-  metinAyarla("dash-hareket-sayi", `${hareketler.length} hareket · son ${d.donem_gun} gün`);
-  const hareketListe = el("dash-hareket-liste");
-  if (hareketListe) {
-    hareketListe.innerHTML = hareketler.length
-      ? hareketler.map(hareketSatirCiz).join("")
-      : `<p class="px-lg py-lg text-center text-on-surface-variant text-sm">Henüz veri yok. Adjust'tan senkronize edin.</p>`;
-  }
-
-  const odemeBody = el("dash-odeme-body");
-  if (odemeBody) {
-    odemeBody.innerHTML = d.yaklasan_odemeler.length
-      ? d.yaklasan_odemeler.map(tabloSatirCiz).join("")
-      : bosTabloMesaji("Bu dönemde harcama yok");
-  }
-
-  const tahsilatBody = el("dash-tahsilat-body");
-  if (tahsilatBody) {
-    tahsilatBody.innerHTML = d.yaklasan_tahsilatlar.length
-      ? d.yaklasan_tahsilatlar.map(tabloSatirCiz).join("")
-      : bosTabloMesaji("Bu dönemde gelir yok");
-  }
+  dashboardListeleriCiz(d);
 }
 
 async function syncDurumGuncelle() {
@@ -204,10 +293,53 @@ async function dashboardYukle() {
   if (bar) bar.classList.add("opacity-60", "pointer-events-none");
   try {
     const data = await DashboardService.dashboardGetir(aktifDonemGun);
-    dashboardRender(data);
+    sonDashboardVerisi = data;
+    await panelAramayiUygula(document.getElementById("panel-ara")?.value || "");
   } finally {
     if (bar) bar.classList.remove("opacity-60", "pointer-events-none");
   }
+}
+
+async function panelAramayiUygula(aramaHam) {
+  const arama = (aramaHam || "").trim();
+  if (!arama) {
+    if (sonDashboardVerisi) dashboardRender(sonDashboardVerisi);
+    return;
+  }
+
+  const istekNo = ++aramaIstekNo;
+  try {
+    const hareketler = await HareketService.listele({
+      gun: aktifDonemGun,
+      partner: arama,
+    });
+    if (istekNo !== aramaIstekNo) return;
+    dashboardRender(aramaDashboardiOlustur(hareketler || [], sonDashboardVerisi));
+  } catch (e) {
+    console.error("Panel arama hatasi:", e);
+  }
+}
+
+function panelAramaBagla() {
+  const input = document.getElementById("panel-ara");
+  if (!input || input.dataset.aramaBagli === "1") return;
+  input.dataset.aramaBagli = "1";
+
+  input.addEventListener("input", () => {
+    if (aramaZamanlayici) clearTimeout(aramaZamanlayici);
+    aramaZamanlayici = setTimeout(() => {
+      panelAramayiUygula(input.value);
+    }, 180);
+  });
+
+  input.addEventListener("keydown", (e) => {
+    if (e.key !== "Enter") return;
+    e.preventDefault();
+    const arama = input.value.trim();
+    if (arama) {
+      window.location.href = `/harcamalar?partner=${encodeURIComponent(arama)}`;
+    }
+  });
 }
 
 function donemFiltreBagla() {
@@ -250,6 +382,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   try {
     await Layout.init();
     panelUyariBagla();
+    panelAramaBagla();
     donemFiltreBagla();
     adjustSyncBagla();
     await dashboardYukle();
